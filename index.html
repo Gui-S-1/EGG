@@ -4,27 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de OS - Manutenção</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        const { useState, useEffect } = React;
-        const { Wrench, AlertCircle, CheckCircle, Clock, LogOut, Plus, Search, Trash2 } = lucide;
+    <script>
+        const { useState, useEffect, createElement: e } = React;
 
-        const MaintenanceApp = () => {
+        // Ícones SVG
+        const icons = {
+            wrench: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' })
+            ),
+            alert: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('circle', { cx: 12, cy: 12, r: 10 }),
+                e('line', { x1: 12, y1: 8, x2: 12, y2: 12 }),
+                e('line', { x1: 12, y1: 16, x2: 12.01, y2: 16 })
+            ),
+            check: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }),
+                e('polyline', { points: '22 4 12 14.01 9 11.01' })
+            ),
+            clock: () => e('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('circle', { cx: 12, cy: 12, r: 10 }),
+                e('polyline', { points: '12 6 12 12 16 14' })
+            ),
+            logout: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' }),
+                e('polyline', { points: '16 17 21 12 16 7' }),
+                e('line', { x1: 21, y1: 12, x2: 9, y2: 12 })
+            ),
+            plus: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('line', { x1: 12, y1: 5, x2: 12, y2: 19 }),
+                e('line', { x1: 5, y1: 12, x2: 19, y2: 12 })
+            ),
+            search: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('circle', { cx: 11, cy: 11, r: 8 }),
+                e('path', { d: 'm21 21-4.35-4.35' })
+            ),
+            trash: () => e('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('polyline', { points: '3 6 5 6 21 6' }),
+                e('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' })
+            )
+        };
+
+        function MaintenanceApp() {
             const [currentUser, setCurrentUser] = useState(null);
             const [orders, setOrders] = useState([]);
-            const [newOrder, setNewOrder] = useState({
-                title: '',
-                description: '',
-                sector: '',
-                priority: 'media'
-            });
+            const [newOrder, setNewOrder] = useState({ title: '', description: '', sector: '', priority: 'media' });
             const [searchTerm, setSearchTerm] = useState('');
             const [loading, setLoading] = useState(true);
             const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -35,70 +69,41 @@
                 manutencao: { username: 'manutencao', password: '123', role: 'maintenance', name: 'Equipe Manutenção' }
             };
 
-            // Carregar dados
             useEffect(() => {
-                loadOrders();
-            }, []);
-
-            // Salvar quando mudar
-            useEffect(() => {
-                if (!loading) {
-                    saveOrders();
-                }
-            }, [orders]);
-
-            const loadOrders = () => {
                 try {
                     const saved = localStorage.getItem('maintenance-orders');
                     if (saved) {
                         setOrders(JSON.parse(saved));
                     } else {
-                        const initialOrders = [
-                            {
-                                id: 1,
-                                title: 'Ar condicionado sala 203 não funciona',
-                                description: 'O ar condicionado da sala 203 está fazendo barulho estranho e não esfria',
-                                sector: 'Administrativo',
-                                priority: 'alta',
-                                status: 'pendente',
-                                createdBy: 'João Silva',
-                                createdAt: '01/12/2024 09:30',
-                            },
-                            {
-                                id: 2,
-                                title: 'Vazamento no banheiro masculino',
-                                description: 'Torneira pingando constantemente',
-                                sector: 'Produção',
-                                priority: 'media',
-                                status: 'em_andamento',
-                                createdBy: 'Maria Santos',
-                                createdAt: '01/12/2024 08:15',
-                            }
+                        const initial = [
+                            { id: 1, title: 'Ar condicionado sala 203 não funciona', description: 'O ar condicionado está fazendo barulho estranho', sector: 'Administrativo', priority: 'alta', status: 'pendente', createdBy: 'João Silva', createdAt: '01/12/2024 09:30' },
+                            { id: 2, title: 'Vazamento no banheiro', description: 'Torneira pingando', sector: 'Produção', priority: 'media', status: 'em_andamento', createdBy: 'Maria Santos', createdAt: '01/12/2024 08:15' }
                         ];
-                        setOrders(initialOrders);
+                        setOrders(initial);
                     }
-                } catch (error) {
-                    console.error('Erro ao carregar:', error);
+                } catch (err) {
+                    console.error(err);
                 }
                 setLoading(false);
-            };
+            }, []);
 
-            const saveOrders = () => {
-                try {
-                    localStorage.setItem('maintenance-orders', JSON.stringify(orders));
-                } catch (error) {
-                    console.error('Erro ao salvar:', error);
+            useEffect(() => {
+                if (!loading && orders.length > 0) {
+                    try {
+                        localStorage.setItem('maintenance-orders', JSON.stringify(orders));
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }
-            };
+            }, [orders, loading]);
 
             const handleLogin = () => {
-                const username = loginForm.username.trim();
-                const password = loginForm.password.trim();
-                
-                if (username === 'usuario' && password === '123') {
+                const u = loginForm.username.trim();
+                const p = loginForm.password.trim();
+                if (u === 'usuario' && p === '123') {
                     setCurrentUser(users.user);
                     setLoginError('');
-                } else if (username === 'manutencao' && password === '123') {
+                } else if (u === 'manutencao' && p === '123') {
                     setCurrentUser(users.manutencao);
                     setLoginError('');
                 } else {
@@ -106,217 +111,181 @@
                 }
             };
 
-            const handleLogout = () => {
-                setCurrentUser(null);
-                setLoginForm({ username: '', password: '' });
-            };
-
             const handleCreateOrder = () => {
                 if (!newOrder.title || !newOrder.description || !newOrder.sector) {
-                    alert('Por favor, preencha todos os campos obrigatórios');
+                    alert('Preencha todos os campos obrigatórios');
                     return;
                 }
-
-                const now = new Date();
                 const order = {
                     id: Date.now(),
                     ...newOrder,
                     status: 'pendente',
                     createdBy: currentUser.name,
-                    createdAt: now.toLocaleString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
+                    createdAt: new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                 };
-
                 setOrders([order, ...orders]);
                 setNewOrder({ title: '', description: '', sector: '', priority: 'media' });
-                alert('✅ Ordem de serviço criada com sucesso!');
+                alert('✅ OS criada com sucesso!');
             };
 
-            const handleStatusChange = (orderId, newStatus) => {
-                setOrders(orders.map(order => 
-                    order.id === orderId ? { ...order, status: newStatus } : order
-                ));
+            const handleStatusChange = (id, status) => {
+                setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
             };
 
-            const handleDeleteOrder = (orderId) => {
-                if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
-                    setOrders(orders.filter(order => order.id !== orderId));
-                    alert('✅ Ordem de serviço excluída!');
+            const handleDelete = (id) => {
+                if (confirm('Excluir esta OS?')) {
+                    setOrders(orders.filter(o => o.id !== id));
                 }
             };
 
-            const getPriorityColor = (priority) => {
-                switch(priority) {
-                    case 'alta': return 'bg-red-100 text-red-800';
-                    case 'media': return 'bg-orange-100 text-orange-800';
-                    case 'baixa': return 'bg-gray-100 text-gray-800';
-                    default: return 'bg-gray-100 text-gray-800';
-                }
-            };
-
-            const filteredOrders = orders.filter(order =>
-                order.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.sector.toLowerCase().includes(searchTerm.toLowerCase())
+            const filtered = orders.filter(o =>
+                o.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.sector.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
+            const priorityColor = (p) => {
+                return p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
+            };
+
             if (loading) {
-                return React.createElement('div', {
-                    className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center'
-                },
-                    React.createElement('div', { className: 'text-center' },
-                        React.createElement(Wrench, { className: 'w-16 h-16 text-indigo-600 mx-auto mb-4 animate-spin' }),
-                        React.createElement('p', { className: 'text-xl text-gray-700' }, 'Carregando sistema...')
+                return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center' },
+                    e('div', { className: 'text-center' },
+                        e('p', { className: 'text-xl text-gray-700' }, 'Carregando...')
                     )
                 );
             }
 
-            // Tela de Login
             if (!currentUser) {
-                return React.createElement('div', {
-                    className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4'
-                },
-                    React.createElement('div', { className: 'bg-white rounded-lg shadow-xl p-8 w-full max-w-md' },
-                        React.createElement('div', { className: 'text-center mb-8' },
-                            React.createElement('div', { className: 'inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4' },
-                                React.createElement(Wrench, { className: 'w-8 h-8 text-white' })
+                return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4' },
+                    e('div', { className: 'bg-white rounded-lg shadow-xl p-8 w-full max-w-md' },
+                        e('div', { className: 'text-center mb-8' },
+                            e('div', { className: 'inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4' },
+                                icons.wrench()
                             ),
-                            React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Sistema de OS'),
-                            React.createElement('p', { className: 'text-gray-600 mt-2' }, 'Gestão de Manutenção')
+                            e('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Sistema de OS'),
+                            e('p', { className: 'text-gray-600 mt-2' }, 'Gestão de Manutenção')
                         ),
-                        React.createElement('div', { className: 'space-y-4' },
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Usuário'),
-                                React.createElement('input', {
+                        e('div', { className: 'space-y-4' },
+                            e('div', null,
+                                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Usuário'),
+                                e('input', {
                                     type: 'text',
                                     value: loginForm.username,
-                                    onChange: (e) => setLoginForm({...loginForm, username: e.target.value}),
-                                    onKeyPress: (e) => e.key === 'Enter' && handleLogin(),
-                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                                    onChange: (ev) => setLoginForm({ ...loginForm, username: ev.target.value }),
+                                    onKeyPress: (ev) => ev.key === 'Enter' && handleLogin(),
+                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
                                     placeholder: 'Digite seu usuário'
                                 })
                             ),
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Senha'),
-                                React.createElement('input', {
+                            e('div', null,
+                                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Senha'),
+                                e('input', {
                                     type: 'password',
                                     value: loginForm.password,
-                                    onChange: (e) => setLoginForm({...loginForm, password: e.target.value}),
-                                    onKeyPress: (e) => e.key === 'Enter' && handleLogin(),
-                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                                    onChange: (ev) => setLoginForm({ ...loginForm, password: ev.target.value }),
+                                    onKeyPress: (ev) => ev.key === 'Enter' && handleLogin(),
+                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
                                     placeholder: 'Digite sua senha'
                                 })
                             ),
-                            loginError && React.createElement('div', { className: 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2' },
-                                React.createElement(AlertCircle, { className: 'w-5 h-5' }),
-                                React.createElement('span', null, loginError)
+                            loginError && e('div', { className: 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2' },
+                                icons.alert(),
+                                e('span', null, loginError)
                             ),
-                            React.createElement('button', {
+                            e('button', {
                                 onClick: handleLogin,
                                 className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors'
                             }, 'Entrar')
                         ),
-                        React.createElement('div', { className: 'mt-6 p-4 bg-gray-50 rounded-lg' },
-                            React.createElement('p', { className: 'text-sm text-gray-600 font-semibold mb-2' }, 'Contas de acesso:'),
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, '👤 Usuário: usuario / Senha: 123'),
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, '🔧 Manutenção: manutencao / Senha: 123')
+                        e('div', { className: 'mt-6 p-4 bg-gray-50 rounded-lg' },
+                            e('p', { className: 'text-sm text-gray-600 font-semibold mb-2' }, 'Contas de acesso:'),
+                            e('p', { className: 'text-xs text-gray-500' }, '👤 Usuário: usuario / Senha: 123'),
+                            e('p', { className: 'text-xs text-gray-500' }, '🔧 Manutenção: manutencao / Senha: 123')
                         )
                     )
                 );
             }
 
-            // Interface Usuário Comum
             if (currentUser.role === 'user') {
-                return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-                    React.createElement('header', { className: 'bg-indigo-600 text-white shadow-lg' },
-                        React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
-                            React.createElement('div', { className: 'flex items-center gap-3' },
-                                React.createElement(Wrench, { className: 'w-8 h-8' }),
-                                React.createElement('div', null,
-                                    React.createElement('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS'),
-                                    React.createElement('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
+                return e('div', { className: 'min-h-screen bg-gray-50' },
+                    e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
+                        e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
+                            e('div', { className: 'flex items-center gap-3' },
+                                icons.wrench(),
+                                e('div', null,
+                                    e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS'),
+                                    e('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
                                 )
                             ),
-                            React.createElement('button', {
-                                onClick: handleLogout,
+                            e('button', {
+                                onClick: () => setCurrentUser(null),
                                 className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg transition-colors'
-                            },
-                                React.createElement(LogOut, { className: 'w-5 h-5' }),
-                                'Sair'
-                            )
+                            }, icons.logout(), 'Sair')
                         )
                     ),
-                    React.createElement('main', { className: 'max-w-4xl mx-auto px-4 py-8' },
-                        React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                            React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
-                                React.createElement(Plus, { className: 'w-6 h-6' }),
-                                'Nova Ordem de Serviço'
+                    e('main', { className: 'max-w-4xl mx-auto px-4 py-8' },
+                        e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
+                                icons.plus(), 'Nova Ordem de Serviço'
                             ),
-                            React.createElement('div', { className: 'space-y-4' },
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
-                                    React.createElement('input', {
+                            e('div', { className: 'space-y-4' },
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
+                                    e('input', {
                                         type: 'text',
                                         value: newOrder.title,
-                                        onChange: (e) => setNewOrder({...newOrder, title: e.target.value}),
-                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                                        onChange: (ev) => setNewOrder({ ...newOrder, title: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
                                         placeholder: 'Ex: Ar condicionado com problema'
                                     })
                                 ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
-                                    React.createElement('textarea', {
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
+                                    e('textarea', {
                                         value: newOrder.description,
-                                        onChange: (e) => setNewOrder({...newOrder, description: e.target.value}),
-                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                                        onChange: (ev) => setNewOrder({ ...newOrder, description: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
                                         rows: 4,
                                         placeholder: 'Descreva o problema...'
                                     })
                                 ),
-                                React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
-                                    React.createElement('div', null,
-                                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Setor *'),
-                                        React.createElement('input', {
+                                e('div', { className: 'grid grid-cols-2 gap-4' },
+                                    e('div', null,
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Setor *'),
+                                        e('input', {
                                             type: 'text',
                                             value: newOrder.sector,
-                                            onChange: (e) => setNewOrder({...newOrder, sector: e.target.value}),
-                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                                            onChange: (ev) => setNewOrder({ ...newOrder, sector: ev.target.value }),
+                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
                                             placeholder: 'Ex: Produção'
                                         })
                                     ),
-                                    React.createElement('div', null,
-                                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Prioridade'),
-                                        React.createElement('select', {
+                                    e('div', null,
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Prioridade'),
+                                        e('select', {
                                             value: newOrder.priority,
-                                            onChange: (e) => setNewOrder({...newOrder, priority: e.target.value}),
-                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500'
+                                            onChange: (ev) => setNewOrder({ ...newOrder, priority: ev.target.value }),
+                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg'
                                         },
-                                            React.createElement('option', { value: 'baixa' }, 'Baixa'),
-                                            React.createElement('option', { value: 'media' }, 'Média'),
-                                            React.createElement('option', { value: 'alta' }, 'Alta')
+                                            e('option', { value: 'baixa' }, 'Baixa'),
+                                            e('option', { value: 'media' }, 'Média'),
+                                            e('option', { value: 'alta' }, 'Alta')
                                         )
                                     )
                                 ),
-                                React.createElement('button', {
+                                e('button', {
                                     onClick: handleCreateOrder,
                                     className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
-                                },
-                                    React.createElement(Plus, { className: 'w-5 h-5' }),
-                                    'Criar Ordem de Serviço'
-                                )
+                                }, icons.plus(), 'Criar Ordem de Serviço')
                             )
                         ),
-                        React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4' },
-                            React.createElement('div', { className: 'flex items-start gap-3' },
-                                React.createElement(CheckCircle, { className: 'w-5 h-5 text-green-600 mt-0.5' }),
-                                React.createElement('div', { className: 'text-sm text-green-800' },
-                                    React.createElement('p', { className: 'font-semibold mb-1' }, '✅ Sistema Pronto para Deploy'),
-                                    React.createElement('p', null, 'Dados salvos automaticamente no navegador.')
+                        e('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4' },
+                            e('div', { className: 'flex items-start gap-3' },
+                                icons.check(),
+                                e('div', { className: 'text-sm text-green-800' },
+                                    e('p', { className: 'font-semibold' }, '✅ Sistema Funcionando'),
+                                    e('p', null, 'Dados salvos automaticamente')
                                 )
                             )
                         )
@@ -324,116 +293,83 @@
                 );
             }
 
-            // Interface Manutenção
-            return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-                React.createElement('header', { className: 'bg-indigo-600 text-white shadow-lg' },
-                    React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
-                        React.createElement('div', { className: 'flex items-center gap-3' },
-                            React.createElement(Wrench, { className: 'w-8 h-8' }),
-                            React.createElement('div', null,
-                                React.createElement('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS - Manutenção'),
-                                React.createElement('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
+            return e('div', { className: 'min-h-screen bg-gray-50' },
+                e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
+                    e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
+                        e('div', { className: 'flex items-center gap-3' },
+                            icons.wrench(),
+                            e('div', null,
+                                e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS - Manutenção'),
+                                e('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
                             )
                         ),
-                        React.createElement('button', {
-                            onClick: handleLogout,
-                            className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg transition-colors'
-                        },
-                            React.createElement(LogOut, { className: 'w-5 h-5' }),
-                            'Sair'
-                        )
+                        e('button', {
+                            onClick: () => setCurrentUser(null),
+                            className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
+                        }, icons.logout(), 'Sair')
                     )
                 ),
-                React.createElement('main', { className: 'max-w-7xl mx-auto px-4 py-8' },
-                    React.createElement('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-gray-800' }, 
-                            `Ordens de Serviço (${filteredOrders.length})`
-                        ),
-                        React.createElement('div', { className: 'relative' },
-                            React.createElement(Search, { className: 'w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }),
-                            React.createElement('input', {
+                e('main', { className: 'max-w-7xl mx-auto px-4 py-8' },
+                    e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
+                        e('h2', { className: 'text-2xl font-bold text-gray-800' }, `Ordens de Serviço (${filtered.length})`),
+                        e('div', { className: 'relative' },
+                            e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
+                            e('input', {
                                 type: 'text',
                                 value: searchTerm,
-                                onChange: (e) => setSearchTerm(e.target.value),
+                                onChange: (ev) => setSearchTerm(ev.target.value),
                                 placeholder: 'Buscar OS...',
-                                className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500'
+                                className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg'
                             })
                         )
                     ),
-                    React.createElement('div', { className: 'grid gap-4' },
-                        filteredOrders.map((order) =>
-                            React.createElement('div', { key: order.id, className: 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow' },
-                                React.createElement('div', { className: 'flex items-start justify-between mb-4' },
-                                    React.createElement('div', { className: 'flex-1' },
-                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, order.title),
-                                            React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(order.priority)}` },
-                                                order.priority.toUpperCase()
-                                            )
-                                        ),
-                                        React.createElement('p', { className: 'text-gray-600 mb-3' }, order.description),
-                                        React.createElement('div', { className: 'flex items-center gap-4 text-sm text-gray-500 flex-wrap' },
-                                            React.createElement('span', null, `📍 ${order.sector}`),
-                                            React.createElement('span', null, `👤 ${order.createdBy}`),
-                                            React.createElement('span', null, `🕒 ${order.createdAt}`)
-                                        )
+                    e('div', { className: 'grid gap-4' },
+                        filtered.map(order =>
+                            e('div', { key: order.id, className: 'bg-white rounded-lg shadow-md p-6' },
+                                e('div', { className: 'mb-4' },
+                                    e('div', { className: 'flex items-center gap-2 mb-2' },
+                                        e('h3', { className: 'text-xl font-bold' }, order.title),
+                                        e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
+                                    ),
+                                    e('p', { className: 'text-gray-600 mb-3' }, order.description),
+                                    e('div', { className: 'flex gap-4 text-sm text-gray-500' },
+                                        e('span', null, `📍 ${order.sector}`),
+                                        e('span', null, `👤 ${order.createdBy}`),
+                                        e('span', null, `🕒 ${order.createdAt}`)
                                     )
                                 ),
-                                React.createElement('div', { className: 'flex items-center justify-between gap-3 pt-4 border-t border-gray-200 flex-wrap' },
-                                    React.createElement('div', { className: 'flex items-center gap-3 flex-wrap' },
-                                        React.createElement('span', { className: 'text-sm font-medium text-gray-700' }, 'Status:'),
-                                        React.createElement('div', { className: 'flex gap-2 flex-wrap' },
-                                            React.createElement('button', {
-                                                onClick: () => handleStatusChange(order.id, 'pendente'),
-                                                className: `px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                                    order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                }`
-                                            },
-                                                React.createElement(Clock, { className: 'w-4 h-4' }),
-                                                'Pendente'
-                                            ),
-                                            React.createElement('button', {
-                                                onClick: () => handleStatusChange(order.id, 'em_andamento'),
-                                                className: `px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                                    order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                }`
-                                            },
-                                                React.createElement(Wrench, { className: 'w-4 h-4' }),
-                                                'Em Andamento'
-                                            ),
-                                            React.createElement('button', {
-                                                onClick: () => handleStatusChange(order.id, 'concluida'),
-                                                className: `px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                                    order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                }`
-                                            },
-                                                React.createElement(CheckCircle, { className: 'w-4 h-4' }),
-                                                'Concluída'
-                                            )
-                                        )
+                                e('div', { className: 'flex justify-between items-center pt-4 border-t' },
+                                    e('div', { className: 'flex gap-2' },
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'pendente'),
+                                            className: `px-3 py-2 rounded text-sm ${order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`
+                                        }, 'Pendente'),
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'em_andamento'),
+                                            className: `px-3 py-2 rounded text-sm ${order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`
+                                        }, 'Em Andamento'),
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'concluida'),
+                                            className: `px-3 py-2 rounded text-sm ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100'}`
+                                        }, 'Concluída')
                                     ),
-                                    React.createElement('button', {
-                                        onClick: () => handleDeleteOrder(order.id),
-                                        className: 'px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-2'
-                                    },
-                                        React.createElement(Trash2, { className: 'w-4 h-4' }),
-                                        'Excluir'
-                                    )
+                                    e('button', {
+                                        onClick: () => handleDelete(order.id),
+                                        className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
+                                    }, 'Excluir')
                                 )
                             )
                         ),
-                        filteredOrders.length === 0 && React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-12 text-center' },
-                            React.createElement(Wrench, { className: 'w-16 h-16 text-gray-300 mx-auto mb-4' }),
-                            React.createElement('p', { className: 'text-gray-500 text-lg' }, 'Nenhuma ordem de serviço encontrada')
+                        filtered.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
+                            e('p', { className: 'text-gray-500' }, 'Nenhuma OS encontrada')
                         )
                     )
                 )
             );
-        };
+        }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(MaintenanceApp));
     </script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </body>
 </html>
