@@ -4,21 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de OS - Manutenção</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, sans-serif; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
 <body>
     <div id="root"></div>
+    <audio id="notificationSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZQQ0PVK3n77FfGAg+ltrzxnMjBS1+zPDajTkHGGS57OihUBELTKXh8bllHAU2jdXzzn0pBSh4yvDdlUENDlqy6e2rWRUKQJnc87dpJAQugtDx2YU2BxpmvOzoqFURCU+n4+67cyQGMojR8dJ+KwUme8vw3Y9ADQxWsOjuq10VCkCY3fO7bykFLn7Q8dmFNQcYZLvq6alUEQlMp+Hwu3UlBjCJ0vLTgCsEJnvN8dyRQQ0OVq/o7axeGQlAl93zvG8pBi5+0fHZhzcIGWK76+mpVREJSKbh8bx0JQYuf9Dx2YY2CBxkvuvpoFUQCUaZ4PK8byIFKn3P8NqGNggiZ77q6qhRFApEmODzu3ElBi1/z/HajDcIHGS+6+mgVRIJRJjg8L1yJQUpfs/w240+Bxlkvu3qpVYUCUSX3/G8cSUGKX7P8duOPQgYY77r6qVWEwlEm9/yu3ElBSl/z/HbjT4IGmS+7OqkVhMKQ5nf8rpxJQYqf8/x2406ChljvuvrqFQUCkGX3/K5cSIGKYDQ8duOOwkZY77s6qhRFApBl9/yuHMiBSmBz/DajjoJGGO+6+qoTxQJP5fe8rhwIgUpgc/x2Yw7ChhjvuvqplEVCT6V3fK3ciMGK4DN8duLOwkZYr7s6KdSFQk9lN3yt3IhBi2Czv=="/>
+    </audio>
 
     <script>
+        const SUPABASE_URL = 'https://ciaceboozuwsawvtxxrt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpYWNlYm9venV3c2F3dnR4eHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMyNzc2NjIsImV4cCI6MjA0ODg1MzY2Mn0.sb_publishable_SNnVuHOGGScUdJ449x7WvA_5d_m5t_M';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         const { useState, useEffect, createElement: e } = React;
-
-        // Ícones SVG
+		// Ícones SVG
         const icons = {
             wrench: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
                 e('path', { d: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' })
@@ -49,9 +58,12 @@
                 e('circle', { cx: 11, cy: 11, r: 8 }),
                 e('path', { d: 'm21 21-4.35-4.35' })
             ),
-            trash: () => e('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-                e('polyline', { points: '3 6 5 6 21 6' }),
-                e('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' })
+            history: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M3 3v5h5' }),
+                e('path', { d: 'M3.05 13A9 9 0 1 0 6 5.3L3 8' })
+            ),
+            message: () => e('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
             )
         };
 
@@ -63,92 +75,105 @@
             const [loading, setLoading] = useState(true);
             const [loginForm, setLoginForm] = useState({ username: '', password: '' });
             const [loginError, setLoginError] = useState('');
-
-            const users = {
-                user: { username: 'usuario', password: '123', role: 'user', name: 'Usuário Comum' },
-                manutencao: { username: 'manutencao', password: '123', role: 'maintenance', name: 'Equipe Manutenção' }
-            };
+            const [showHistory, setShowHistory] = useState(false);
+            const [editingMessage, setEditingMessage] = useState(null);
+            const [messageText, setMessageText] = useState('');
+            const [lastOrderCount, setLastOrderCount] = useState(0);
 
             useEffect(() => {
+                loadOrders();
+                const interval = setInterval(loadOrders, 5000);
+                return () => clearInterval(interval);
+            }, [currentUser]);
+
+            useEffect(() => {
+                if (currentUser?.role === 'maintenance' && orders.length > lastOrderCount && lastOrderCount > 0) {
+                    const audio = document.getElementById('notificationSound');
+                    audio?.play().catch(e => console.log('Áudio bloqueado'));
+                }
+                setLastOrderCount(orders.length);
+            }, [orders.length]);
+
+            const loadOrders = async () => {
                 try {
-                    const saved = localStorage.getItem('maintenance-orders');
-                    if (saved) {
-                        setOrders(JSON.parse(saved));
-                    } else {
-                        const initial = [
-                            { id: 1, title: 'Ar condicionado sala 203 não funciona', description: 'O ar condicionado está fazendo barulho estranho', sector: 'Administrativo', priority: 'alta', status: 'pendente', createdBy: 'João Silva', createdAt: '01/12/2024 09:30' },
-                            { id: 2, title: 'Vazamento no banheiro', description: 'Torneira pingando', sector: 'Produção', priority: 'media', status: 'em_andamento', createdBy: 'Maria Santos', createdAt: '01/12/2024 08:15' }
-                        ];
-                        setOrders(initial);
-                    }
+                    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+                    if (error) throw error;
+                    setOrders(data || []);
                 } catch (err) {
                     console.error(err);
                 }
                 setLoading(false);
-            }, []);
+            };
 
-            useEffect(() => {
-                if (!loading && orders.length > 0) {
-                    try {
-                        localStorage.setItem('maintenance-orders', JSON.stringify(orders));
-                    } catch (err) {
-                        console.error(err);
+            const handleLogin = async () => {
+                try {
+                    const { data, error } = await supabase.from('users').select('*').eq('username', loginForm.username.trim()).eq('password', loginForm.password.trim()).single();
+                    if (error || !data) {
+                        setLoginError('Usuário ou senha inválidos');
+                        return;
                     }
-                }
-            }, [orders, loading]);
-
-            const handleLogin = () => {
-                const u = loginForm.username.trim();
-                const p = loginForm.password.trim();
-                if (u === 'usuario' && p === '123') {
-                    setCurrentUser(users.user);
+                    setCurrentUser(data);
                     setLoginError('');
-                } else if (u === 'manutencao' && p === '123') {
-                    setCurrentUser(users.manutencao);
-                    setLoginError('');
-                } else {
-                    setLoginError('Usuário ou senha inválidos');
+                } catch (err) {
+                    setLoginError('Erro ao fazer login');
                 }
             };
 
-            const handleCreateOrder = () => {
+            const handleCreateOrder = async () => {
                 if (!newOrder.title || !newOrder.description || !newOrder.sector) {
                     alert('Preencha todos os campos obrigatórios');
                     return;
                 }
-                const order = {
-                    id: Date.now(),
-                    ...newOrder,
-                    status: 'pendente',
-                    createdBy: currentUser.name,
-                    createdAt: new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                };
-                setOrders([order, ...orders]);
-                setNewOrder({ title: '', description: '', sector: '', priority: 'media' });
-                alert('✅ OS criada com sucesso!');
-            };
-
-            const handleStatusChange = (id, status) => {
-                setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
-            };
-
-            const handleDelete = (id) => {
-                if (confirm('Excluir esta OS?')) {
-                    setOrders(orders.filter(o => o.id !== id));
+                try {
+                    const { error } = await supabase.from('orders').insert([{
+                        ...newOrder,
+                        status: 'pendente',
+                        created_by_id: currentUser.id,
+                        created_by_name: currentUser.name
+                    }]);
+                    if (error) throw error;
+                    setNewOrder({ title: '', description: '', sector: '', priority: 'media' });
+                    alert('✅ OS criada com sucesso!');
+                    loadOrders();
+                } catch (err) {
+                    alert('Erro ao criar OS');
                 }
             };
 
-            const filtered = orders.filter(o =>
+            const handleStatusChange = async (id, status) => {
+                try {
+                    const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+                    if (error) throw error;
+                    loadOrders();
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            const handleSaveMessage = async (orderId) => {
+                try {
+                    const { error } = await supabase.from('orders').update({ message: messageText }).eq('id', orderId);
+                    if (error) throw error;
+                    setEditingMessage(null);
+                    setMessageText('');
+                    loadOrders();
+                    alert('✅ Mensagem enviada!');
+                } catch (err) {
+                    alert('Erro ao enviar mensagem');
+                }
+            };
+
+            const priorityColor = (p) => p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
+
+            const myOrders = currentUser?.role === 'user' ? orders.filter(o => o.created_by_id === currentUser.id) : orders;
+            const activeOrders = myOrders.filter(o => o.status !== 'concluida');
+            const completedOrders = myOrders.filter(o => o.status === 'concluida');
+            const displayOrders = (showHistory ? completedOrders : activeOrders).filter(o =>
                 o.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 o.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 o.sector.toLowerCase().includes(searchTerm.toLowerCase())
             );
-
-            const priorityColor = (p) => {
-                return p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
-            };
-
-            if (loading) {
+			if (loading) {
                 return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center' },
                     e('div', { className: 'text-center' },
                         e('p', { className: 'text-xl text-gray-700' }, 'Carregando...')
@@ -197,11 +222,6 @@
                                 onClick: handleLogin,
                                 className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors'
                             }, 'Entrar')
-                        ),
-                        e('div', { className: 'mt-6 p-4 bg-gray-50 rounded-lg' },
-                            e('p', { className: 'text-sm text-gray-600 font-semibold mb-2' }, 'Contas de acesso:'),
-                            e('p', { className: 'text-xs text-gray-500' }, '👤 Usuário: usuario / Senha: 123'),
-                            e('p', { className: 'text-xs text-gray-500' }, '🔧 Manutenção: manutencao / Senha: 123')
                         )
                     )
                 );
@@ -215,12 +235,12 @@
                                 icons.wrench(),
                                 e('div', null,
                                     e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS'),
-                                    e('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
+                                    e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
                                 )
                             ),
                             e('button', {
                                 onClick: () => setCurrentUser(null),
-                                className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg transition-colors'
+                                className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
                             }, icons.logout(), 'Sair')
                         )
                     ),
@@ -280,13 +300,43 @@
                                 }, icons.plus(), 'Criar Ordem de Serviço')
                             )
                         ),
-                        e('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4' },
-                            e('div', { className: 'flex items-start gap-3' },
-                                icons.check(),
-                                e('div', { className: 'text-sm text-green-800' },
-                                    e('p', { className: 'font-semibold' }, '✅ Sistema Funcionando'),
-                                    e('p', null, 'Dados salvos automaticamente')
+                        e('div', { className: 'mb-6' },
+                            e('h2', { className: 'text-2xl font-bold mb-4' }, 'Minhas Ordens de Serviço')
+                        ),
+                        e('div', { className: 'space-y-4' },
+                            displayOrders.map(order =>
+                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                                    e('div', { className: 'mb-4' },
+                                        e('div', { className: 'flex items-center gap-2 mb-2' },
+                                            e('h3', { className: 'text-xl font-bold' }, order.title),
+                                            e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
+                                        ),
+                                        e('p', { className: 'text-gray-600 mb-3' }, order.description),
+                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 mb-3' },
+                                            e('span', null, `📍 ${order.sector}`),
+                                            e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
+                                        ),
+                                        e('div', { className: 'flex items-center gap-2' },
+                                            e('span', { className: `px-3 py-1 rounded text-sm font-medium ${
+                                                order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                                                order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-green-100 text-green-800'
+                                            }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
+                                        ),
+                                        order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200' },
+                                            e('div', { className: 'flex items-start gap-2' },
+                                                icons.message(),
+                                                e('div', null,
+                                                    e('p', { className: 'text-sm font-semibold text-blue-800' }, 'Mensagem da Manutenção:'),
+                                                    e('p', { className: 'text-sm text-blue-700' }, order.message)
+                                                )
+                                            )
+                                        )
+                                    )
                                 )
+                            ),
+                            displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
+                                e('p', { className: 'text-gray-500' }, 'Nenhuma OS encontrada')
                             )
                         )
                     )
@@ -300,7 +350,7 @@
                             icons.wrench(),
                             e('div', null,
                                 e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS - Manutenção'),
-                                e('p', { className: 'text-sm text-indigo-200' }, `Bem-vindo, ${currentUser.name}`)
+                                e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
                             )
                         ),
                         e('button', {
@@ -311,7 +361,16 @@
                 ),
                 e('main', { className: 'max-w-7xl mx-auto px-4 py-8' },
                     e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
-                        e('h2', { className: 'text-2xl font-bold text-gray-800' }, `Ordens de Serviço (${filtered.length})`),
+                        e('div', { className: 'flex gap-3' },
+                            e('button', {
+                                onClick: () => setShowHistory(false),
+                                className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`
+                            }, `Ativas (${activeOrders.length})`),
+                            e('button', {
+                                onClick: () => setShowHistory(true),
+                                className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`
+                            }, icons.history(), `Histórico (${completedOrders.length})`)
+                        ),
                         e('div', { className: 'relative' },
                             e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
                             e('input', {
@@ -323,9 +382,9 @@
                             })
                         )
                     ),
-                    e('div', { className: 'grid gap-4' },
-                        filtered.map(order =>
-                            e('div', { key: order.id, className: 'bg-white rounded-lg shadow-md p-6' },
+                    e('div', { className: 'space-y-4' },
+                        displayOrders.map(order =>
+                            e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
                                 e('div', { className: 'mb-4' },
                                     e('div', { className: 'flex items-center gap-2 mb-2' },
                                         e('h3', { className: 'text-xl font-bold' }, order.title),
@@ -334,11 +393,11 @@
                                     e('p', { className: 'text-gray-600 mb-3' }, order.description),
                                     e('div', { className: 'flex gap-4 text-sm text-gray-500' },
                                         e('span', null, `📍 ${order.sector}`),
-                                        e('span', null, `👤 ${order.createdBy}`),
-                                        e('span', null, `🕒 ${order.createdAt}`)
+                                        e('span', null, `👤 ${order.created_by_name}`),
+                                        e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
                                     )
                                 ),
-                                e('div', { className: 'flex justify-between items-center pt-4 border-t' },
+                                !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
                                     e('div', { className: 'flex gap-2' },
                                         e('button', {
                                             onClick: () => handleStatusChange(order.id, 'pendente'),
@@ -352,16 +411,40 @@
                                             onClick: () => handleStatusChange(order.id, 'concluida'),
                                             className: `px-3 py-2 rounded text-sm ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100'}`
                                         }, 'Concluída')
+                                    )
+                                ),
+                                editingMessage === order.id ? e('div', { className: 'mt-3' },
+                                    e('textarea', {
+                                        value: messageText,
+                                        onChange: (ev) => setMessageText(ev.target.value),
+                                        className: 'w-full px-3 py-2 border rounded-lg mb-2',
+                                        rows: 3,
+                                        placeholder: 'Digite sua mensagem...'
+                                    }),
+                                    e('div', { className: 'flex gap-2' },
+                                        e('button', {
+                                            onClick: () => handleSaveMessage(order.id),
+                                            className: 'px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700'
+                                        }, 'Enviar'),
+                                        e('button', {
+                                            onClick: () => { setEditingMessage(null); setMessageText(''); },
+                                            className: 'px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'
+                                        }, 'Cancelar')
+                                    )
+                                ) : e('div', null,
+                                    order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2' },
+                                        e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
+                                        e('p', { className: 'text-sm text-blue-700' }, order.message)
                                     ),
-                                    e('button', {
-                                        onClick: () => handleDelete(order.id),
-                                        className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
-                                    }, 'Excluir')
+                                    !showHistory && e('button', {
+                                        onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
+                                        className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
+                                    }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
                                 )
                             )
                         ),
-                        filtered.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
-                            e('p', { className: 'text-gray-500' }, 'Nenhuma OS encontrada')
+                        displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
+                            e('p', { className: 'text-gray-500' }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
                         )
                     )
                 )
