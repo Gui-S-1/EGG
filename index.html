@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de OS - Manutenção</title>
+    <title>Sistema de OS - Manutenção Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -13,6 +13,8 @@
         body { font-family: system-ui, -apple-system, sans-serif; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
     </style>
 </head>
 <body>
@@ -27,7 +29,8 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const { useState, useEffect, createElement: e } = React;
-		// Ícones SVG
+
+        // Ícones SVG
         const icons = {
             wrench: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
                 e('path', { d: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' })
@@ -64,13 +67,40 @@
             ),
             message: () => e('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
                 e('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
+            ),
+            calendar: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('rect', { x: 3, y: 4, width: 18, height: 18, rx: 2, ry: 2 }),
+                e('line', { x1: 16, y1: 2, x2: 16, y2: 6 }),
+                e('line', { x1: 8, y1: 2, x2: 8, y2: 6 }),
+                e('line', { x1: 3, y1: 10, x2: 21, y2: 10 })
+            ),
+            clipboard: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' }),
+                e('rect', { x: 8, y: 2, width: 8, height: 4, rx: 1, ry: 1 })
+            ),
+            bell: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9' }),
+                e('path', { d: 'M13.73 21a2 2 0 0 1-3.46 0' })
+            ),
+            chart: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('line', { x1: 18, y1: 20, x2: 18, y2: 10 }),
+                e('line', { x1: 12, y1: 20, x2: 12, y2: 4 }),
+                e('line', { x1: 6, y1: 20, x2: 6, y2: 14 })
+            ),
+            eye: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' }),
+                e('circle', { cx: 12, cy: 12, r: 3 })
             )
         };
-
-        function MaintenanceApp() {
+		function MaintenanceApp() {
             const [currentUser, setCurrentUser] = useState(null);
+            const [currentTab, setCurrentTab] = useState('orders');
             const [orders, setOrders] = useState([]);
+            const [preventiveSchedule, setPreventiveSchedule] = useState([]);
+            const [preventiveRecords, setPreventiveRecords] = useState([]);
             const [newOrder, setNewOrder] = useState({ title: '', description: '', sector: '', priority: 'media' });
+            const [newPreventive, setNewPreventive] = useState({ title: '', description: '', frequency: 'mensal', next_date: '', location: '' });
+            const [newRecord, setNewRecord] = useState({ title: '', location: '', details: '', materials: '' });
             const [searchTerm, setSearchTerm] = useState('');
             const [loading, setLoading] = useState(true);
             const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -79,10 +109,11 @@
             const [editingMessage, setEditingMessage] = useState(null);
             const [messageText, setMessageText] = useState('');
             const [lastOrderCount, setLastOrderCount] = useState(0);
+            const [stats, setStats] = useState({ total: 0, pendente: 0, em_andamento: 0, concluida: 0 });
 
             useEffect(() => {
-                loadOrders();
-                const interval = setInterval(loadOrders, 5000);
+                loadData();
+                const interval = setInterval(loadData, 5000);
                 return () => clearInterval(interval);
             }, [currentUser]);
 
@@ -94,11 +125,25 @@
                 setLastOrderCount(orders.length);
             }, [orders.length]);
 
-            const loadOrders = async () => {
+            const loadData = async () => {
                 try {
-                    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-                    if (error) throw error;
-                    setOrders(data || []);
+                    const [ordersData, scheduleData, recordsData] = await Promise.all([
+                        supabase.from('orders').select('*').order('created_at', { ascending: false }),
+                        supabase.from('preventive_schedule').select('*').order('next_date', { ascending: true }),
+                        supabase.from('preventive_records').select('*').order('executed_date', { ascending: false })
+                    ]);
+
+                    if (ordersData.data) {
+                        setOrders(ordersData.data);
+                        const st = ordersData.data.reduce((acc, o) => {
+                            acc.total++;
+                            acc[o.status]++;
+                            return acc;
+                        }, { total: 0, pendente: 0, em_andamento: 0, concluida: 0 });
+                        setStats(st);
+                    }
+                    if (scheduleData.data) setPreventiveSchedule(scheduleData.data);
+                    if (recordsData.data) setPreventiveRecords(recordsData.data);
                 } catch (err) {
                     console.error(err);
                 }
@@ -134,9 +179,45 @@
                     if (error) throw error;
                     setNewOrder({ title: '', description: '', sector: '', priority: 'media' });
                     alert('✅ OS criada com sucesso!');
-                    loadOrders();
+                    loadData();
                 } catch (err) {
                     alert('Erro ao criar OS');
+                }
+            };
+
+            const handleCreatePreventive = async () => {
+                if (!newPreventive.title || !newPreventive.description || !newPreventive.next_date || !newPreventive.location) {
+                    alert('Preencha todos os campos obrigatórios');
+                    return;
+                }
+                try {
+                    const { error } = await supabase.from('preventive_schedule').insert([newPreventive]);
+                    if (error) throw error;
+                    setNewPreventive({ title: '', description: '', frequency: 'mensal', next_date: '', location: '' });
+                    alert('✅ Preventiva agendada!');
+                    loadData();
+                } catch (err) {
+                    alert('Erro ao criar preventiva');
+                }
+            };
+
+            const handleCreateRecord = async () => {
+                if (!newRecord.title || !newRecord.location || !newRecord.details) {
+                    alert('Preencha todos os campos obrigatórios');
+                    return;
+                }
+                try {
+                    const { error } = await supabase.from('preventive_records').insert([{
+                        ...newRecord,
+                        executed_by: currentUser.name,
+                        status: 'concluida'
+                    }]);
+                    if (error) throw error;
+                    setNewRecord({ title: '', location: '', details: '', materials: '' });
+                    alert('✅ Registro salvo!');
+                    loadData();
+                } catch (err) {
+                    alert('Erro ao salvar registro');
                 }
             };
 
@@ -144,7 +225,7 @@
                 try {
                     const { error } = await supabase.from('orders').update({ status }).eq('id', id);
                     if (error) throw error;
-                    loadOrders();
+                    loadData();
                 } catch (err) {
                     console.error(err);
                 }
@@ -156,14 +237,27 @@
                     if (error) throw error;
                     setEditingMessage(null);
                     setMessageText('');
-                    loadOrders();
+                    loadData();
                     alert('✅ Mensagem enviada!');
                 } catch (err) {
                     alert('Erro ao enviar mensagem');
                 }
             };
 
+            const handleDeletePreventive = async (id) => {
+                if (confirm('Excluir esta preventiva?')) {
+                    try {
+                        const { error } = await supabase.from('preventive_schedule').delete().eq('id', id);
+                        if (error) throw error;
+                        loadData();
+                    } catch (err) {
+                        alert('Erro ao excluir');
+                    }
+                }
+            };
+
             const priorityColor = (p) => p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
+            const frequencyLabel = (f) => ({ diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' }[f] || f);
 
             const myOrders = currentUser?.role === 'user' ? orders.filter(o => o.created_by_id === currentUser.id) : orders;
             const activeOrders = myOrders.filter(o => o.status !== 'concluida');
@@ -173,10 +267,13 @@
                 o.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 o.sector.toLowerCase().includes(searchTerm.toLowerCase())
             );
+
+            const overduePreventives = preventiveSchedule.filter(p => new Date(p.next_date) < new Date());
 			if (loading) {
                 return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center' },
                     e('div', { className: 'text-center' },
-                        e('p', { className: 'text-xl text-gray-700' }, 'Carregando...')
+                        e('div', { className: 'mb-4' }, icons.wrench()),
+                        e('p', { className: 'text-xl text-gray-700' }, 'Carregando sistema...')
                     )
                 );
             }
@@ -189,7 +286,7 @@
                                 icons.wrench()
                             ),
                             e('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Sistema de OS'),
-                            e('p', { className: 'text-gray-600 mt-2' }, 'Gestão de Manutenção')
+                            e('p', { className: 'text-gray-600 mt-2' }, 'Gestão de Manutenção Completa')
                         ),
                         e('div', { className: 'space-y-4' },
                             e('div', null,
@@ -305,7 +402,7 @@
                         ),
                         e('div', { className: 'space-y-4' },
                             displayOrders.map(order =>
-                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
                                     e('div', { className: 'mb-4' },
                                         e('div', { className: 'flex items-center gap-2 mb-2' },
                                             e('h3', { className: 'text-xl font-bold' }, order.title),
@@ -342,6 +439,9 @@
                     )
                 );
             }
+			// Interface para Manutenção e Dono
+            const canEdit = currentUser.role === 'maintenance';
+            const showAllFeatures = currentUser.role === 'maintenance' || currentUser.role === 'owner';
 
             return e('div', { className: 'min-h-screen bg-gray-50' },
                 e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
@@ -349,7 +449,7 @@
                         e('div', { className: 'flex items-center gap-3' },
                             icons.wrench(),
                             e('div', null,
-                                e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS - Manutenção'),
+                                e('h1', { className: 'text-2xl font-bold' }, currentUser.role === 'owner' ? 'Painel do Dono' : 'Sistema de Manutenção'),
                                 e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
                             )
                         ),
@@ -359,92 +459,364 @@
                         }, icons.logout(), 'Sair')
                     )
                 ),
-                e('main', { className: 'max-w-7xl mx-auto px-4 py-8' },
-                    e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
-                        e('div', { className: 'flex gap-3' },
-                            e('button', {
-                                onClick: () => setShowHistory(false),
-                                className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`
-                            }, `Ativas (${activeOrders.length})`),
-                            e('button', {
-                                onClick: () => setShowHistory(true),
-                                className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`
-                            }, icons.history(), `Histórico (${completedOrders.length})`)
+                e('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
+                    e('div', { className: 'flex gap-3 mb-6 overflow-x-auto pb-2' },
+                        e('button', {
+                            onClick: () => setCurrentTab('orders'),
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'orders' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                        }, icons.clipboard(), 'Ordens de Serviço'),
+                        showAllFeatures && e('button', {
+                            onClick: () => setCurrentTab('preventive-schedule'),
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-schedule' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                        }, icons.calendar(), 'Preventivas Programadas', overduePreventives.length > 0 && e('span', { className: 'bg-red-500 text-white text-xs px-2 py-1 rounded-full' }, overduePreventives.length)),
+                        showAllFeatures && e('button', {
+                            onClick: () => setCurrentTab('preventive-records'),
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-records' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                        }, icons.clipboard(), 'Registros de Preventivas'),
+                        showAllFeatures && e('button', {
+                            onClick: () => setCurrentTab('stats'),
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'stats' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                        }, icons.chart(), 'Estatísticas')
+                    ),
+
+                    currentTab === 'orders' && e('div', null,
+                        e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
+                            e('div', { className: 'flex gap-3' },
+                                e('button', {
+                                    onClick: () => setShowHistory(false),
+                                    className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                                }, `Ativas (${activeOrders.length})`),
+                                e('button', {
+                                    onClick: () => setShowHistory(true),
+                                    className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                                }, icons.history(), `Histórico (${completedOrders.length})`)
+                            ),
+                            e('div', { className: 'relative' },
+                                e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
+                                e('input', {
+                                    type: 'text',
+                                    value: searchTerm,
+                                    onChange: (ev) => setSearchTerm(ev.target.value),
+                                    placeholder: 'Buscar OS...',
+                                    className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow'
+                                })
+                            )
                         ),
-                        e('div', { className: 'relative' },
-                            e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
-                            e('input', {
-                                type: 'text',
-                                value: searchTerm,
-                                onChange: (ev) => setSearchTerm(ev.target.value),
-                                placeholder: 'Buscar OS...',
-                                className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg'
-                            })
+                        e('div', { className: 'space-y-4' },
+                            displayOrders.map(order =>
+                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                                    e('div', { className: 'mb-4' },
+                                        e('div', { className: 'flex items-center justify-between mb-2' },
+                                            e('div', { className: 'flex items-center gap-2' },
+                                                e('h3', { className: 'text-xl font-bold' }, order.title),
+                                                e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
+                                            ),
+                                            currentUser.role === 'owner' && e('span', { className: 'flex items-center gap-1 text-sm text-gray-500' }, icons.eye(), 'Visualização')
+                                        ),
+                                        e('p', { className: 'text-gray-600 mb-3' }, order.description),
+                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 flex-wrap' },
+                                            e('span', null, `📍 ${order.sector}`),
+                                            e('span', null, `👤 ${order.created_by_name}`),
+                                            e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
+                                        )
+                                    ),
+                                    canEdit && !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
+                                        e('div', { className: 'flex gap-2 flex-wrap' },
+                                            e('button', {
+                                                onClick: () => handleStatusChange(order.id, 'pendente'),
+                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
+                                            }, '⏳ Pendente'),
+                                            e('button', {
+                                                onClick: () => handleStatusChange(order.id, 'em_andamento'),
+                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
+                                            }, '🔧 Em Andamento'),
+                                            e('button', {
+                                                onClick: () => handleStatusChange(order.id, 'concluida'),
+                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
+                                            }, '✅ Concluída')
+                                        )
+                                    ),
+                                    !canEdit && e('div', { className: 'pt-4 border-t mb-4' },
+                                        e('span', { className: `px-4 py-2 rounded text-sm font-medium inline-block ${
+                                            order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                                            order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
+                                            'bg-green-100 text-green-800'
+                                        }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
+                                    ),
+                                    canEdit && editingMessage === order.id ? e('div', { className: 'mt-3' },
+                                        e('textarea', {
+                                            value: messageText,
+                                            onChange: (ev) => setMessageText(ev.target.value),
+                                            className: 'w-full px-3 py-2 border rounded-lg mb-2',
+                                            rows: 3,
+                                            placeholder: 'Ex: Já vamos aí dar uma olhada!'
+                                        }),
+                                        e('div', { className: 'flex gap-2' },
+                                            e('button', {
+                                                onClick: () => handleSaveMessage(order.id),
+                                                className: 'px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700'
+                                            }, 'Enviar'),
+                                            e('button', {
+                                                onClick: () => { setEditingMessage(null); setMessageText(''); },
+                                                className: 'px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'
+                                            }, 'Cancelar')
+                                        )
+                                    ) : e('div', null,
+                                        order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2' },
+                                            e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
+                                            e('p', { className: 'text-sm text-blue-700' }, order.message)
+                                        ),
+                                        canEdit && !showHistory && e('button', {
+                                            onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
+                                            className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
+                                        }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
+                                    )
+                                )
+                            ),
+                            displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
+                            )
                         )
                     ),
-                    e('div', { className: 'space-y-4' },
-                        displayOrders.map(order =>
-                            e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
-                                e('div', { className: 'mb-4' },
-                                    e('div', { className: 'flex items-center gap-2 mb-2' },
-                                        e('h3', { className: 'text-xl font-bold' }, order.title),
-                                        e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
-                                    ),
-                                    e('p', { className: 'text-gray-600 mb-3' }, order.description),
-                                    e('div', { className: 'flex gap-4 text-sm text-gray-500' },
-                                        e('span', null, `📍 ${order.sector}`),
-                                        e('span', null, `👤 ${order.created_by_name}`),
-                                        e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
-                                    )
+
+                    currentTab === 'preventive-schedule' && showAllFeatures && e('div', null,
+                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
+                                icons.calendar(), 'Agendar Nova Preventiva'
+                            ),
+                            e('div', { className: 'space-y-4' },
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
+                                    e('input', {
+                                        type: 'text',
+                                        value: newPreventive.title,
+                                        onChange: (ev) => setNewPreventive({ ...newPreventive, title: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
+                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
+                                    })
                                 ),
-                                !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
-                                    e('div', { className: 'flex gap-2' },
-                                        e('button', {
-                                            onClick: () => handleStatusChange(order.id, 'pendente'),
-                                            className: `px-3 py-2 rounded text-sm ${order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`
-                                        }, 'Pendente'),
-                                        e('button', {
-                                            onClick: () => handleStatusChange(order.id, 'em_andamento'),
-                                            className: `px-3 py-2 rounded text-sm ${order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`
-                                        }, 'Em Andamento'),
-                                        e('button', {
-                                            onClick: () => handleStatusChange(order.id, 'concluida'),
-                                            className: `px-3 py-2 rounded text-sm ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100'}`
-                                        }, 'Concluída')
-                                    )
-                                ),
-                                editingMessage === order.id ? e('div', { className: 'mt-3' },
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
                                     e('textarea', {
-                                        value: messageText,
-                                        onChange: (ev) => setMessageText(ev.target.value),
-                                        className: 'w-full px-3 py-2 border rounded-lg mb-2',
+                                        value: newPreventive.description,
+                                        onChange: (ev) => setNewPreventive({ ...newPreventive, description: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         rows: 3,
-                                        placeholder: 'Digite sua mensagem...'
-                                    }),
-                                    e('div', { className: 'flex gap-2' },
-                                        e('button', {
-                                            onClick: () => handleSaveMessage(order.id),
-                                            className: 'px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700'
-                                        }, 'Enviar'),
-                                        e('button', {
-                                            onClick: () => { setEditingMessage(null); setMessageText(''); },
-                                            className: 'px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'
-                                        }, 'Cancelar')
-                                    )
-                                ) : e('div', null,
-                                    order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2' },
-                                        e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
-                                        e('p', { className: 'text-sm text-blue-700' }, order.message)
+                                        placeholder: 'Descreva a manutenção preventiva...'
+                                    })
+                                ),
+                                e('div', { className: 'grid grid-cols-3 gap-4' },
+                                    e('div', null,
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: newPreventive.location,
+                                            onChange: (ev) => setNewPreventive({ ...newPreventive, location: ev.target.value }),
+                                            className: 'w-full px-4 py-2 border rounded-lg',
+                                            placeholder: 'Ex: Aviários 1,2,3,4'
+                                        })
                                     ),
-                                    !showHistory && e('button', {
-                                        onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
-                                        className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
-                                    }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
+                                    e('div', null,
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Frequência'),
+                                        e('select', {
+                                            value: newPreventive.frequency,
+                                            onChange: (ev) => setNewPreventive({ ...newPreventive, frequency: ev.target.value }),
+                                            className: 'w-full px-4 py-2 border rounded-lg'
+                                        },
+                                            e('option', { value: 'diario' }, 'Diário'),
+                                            e('option', { value: 'semanal' }, 'Semanal'),
+                                            e('option', { value: 'mensal' }, 'Mensal'),
+                                            e('option', { value: 'trimestral' }, 'Trimestral'),
+                                            e('option', { value: 'semestral' }, 'Semestral'),
+                                            e('option', { value: 'anual' }, 'Anual')
+                                        )
+                                    ),
+                                    e('div', null,
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Próxima Data *'),
+                                        e('input', {
+                                            type: 'date',
+                                            value: newPreventive.next_date,
+                                            onChange: (ev) => setNewPreventive({ ...newPreventive, next_date: ev.target.value }),
+                                            className: 'w-full px-4 py-2 border rounded-lg'
+                                        })
+                                    )
+                                ),
+                                e('button', {
+                                    onClick: handleCreatePreventive,
+                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
+                                }, icons.plus(), 'Agendar Preventiva')
+                            )
+                        ),
+                        overduePreventives.length > 0 && e('div', { className: 'bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6' },
+                            e('div', { className: 'flex items-center gap-2 mb-2' },
+                                icons.bell(),
+                                e('h3', { className: 'font-bold text-red-800' }, `⚠️ ${overduePreventives.length} Preventiva(s) Atrasada(s)!`)
+                            )
+                        ),
+                        e('div', { className: 'space-y-4' },
+                            preventiveSchedule.map(prev => {
+                                const isOverdue = new Date(prev.next_date) < new Date();
+                                return e('div', { key: prev.id, className: `bg-white rounded-lg shadow-md p-6 ${isOverdue ? 'border-2 border-red-400' : ''}` },
+                                    e('div', { className: 'flex justify-between items-start mb-3' },
+                                        e('div', { className: 'flex-1' },
+                                            e('div', { className: 'flex items-center gap-2 mb-2' },
+                                                e('h3', { className: 'text-xl font-bold' }, prev.title),
+                                                isOverdue && e('span', { className: 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold' }, 'ATRASADA')
+                                            ),
+                                            e('p', { className: 'text-gray-600 mb-2' }, prev.description),
+                                            e('div', { className: 'flex gap-4 text-sm text-gray-500' },
+                                                e('span', null, `📍 ${prev.location}`),
+                                                e('span', null, `🔄 ${frequencyLabel(prev.frequency)}`),
+                                                e('span', { className: isOverdue ? 'text-red-600 font-semibold' : '' }, `📅 ${new Date(prev.next_date).toLocaleDateString('pt-BR')}`)
+                                            )
+                                        ),
+                                        canEdit && e('button', {
+                                            onClick: () => handleDeletePreventive(prev.id),
+                                            className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
+                                        }, '🗑️ Excluir')
+                                    )
+                                );
+                            }),
+                            preventiveSchedule.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhuma preventiva agendada')
+                            )
+                        )
+                    ),
+
+                    currentTab === 'preventive-records' && showAllFeatures && e('div', null,
+                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
+                                icons.clipboard(), 'Registrar Preventiva Executada'
+                            ),
+                            e('div', { className: 'space-y-4' },
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
+                                    e('input', {
+                                        type: 'text',
+                                        value: newRecord.title,
+                                        onChange: (ev) => setNewRecord({ ...newRecord, title: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
+                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
+                                    })
+                                ),
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
+                                    e('input', {
+                                        type: 'text',
+                                        value: newRecord.location,
+                                        onChange: (ev) => setNewRecord({ ...newRecord, location: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
+                                        placeholder: 'Ex: Aviários 1,2,3,4'
+                                    })
+                                ),
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Detalhes do Serviço *'),
+                                    e('textarea', {
+                                        value: newRecord.details,
+                                        onChange: (ev) => setNewRecord({ ...newRecord, details: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
+                                        rows: 4,
+                                        placeholder: 'Descreva tudo que foi feito: correntes lubrificadas, rolamentos verificados, etc...'
+                                    })
+                                ),
+                                e('div', null,
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Materiais Utilizados (opcional)'),
+                                    e('textarea', {
+                                        value: newRecord.materials,
+                                        onChange: (ev) => setNewRecord({ ...newRecord, materials: ev.target.value }),
+                                        className: 'w-full px-4 py-2 border rounded-lg',
+                                        rows: 3,
+                                        placeholder: 'Ex: 2L óleo lubrificante, 3 lâmpadas LED 20W, graxa industrial...'
+                                    })
+                                ),
+                                e('button', {
+                                    onClick: handleCreateRecord,
+                                    className: 'w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center gap-2'
+                                }, icons.check(), 'Salvar Registro')
+                            )
+                        ),
+                        e('div', { className: 'space-y-4' },
+                            preventiveRecords.map(record =>
+                                e('div', { key: record.id, className: 'bg-white rounded-lg shadow-md p-6' },
+                                    e('div', { className: 'mb-4' },
+                                        e('div', { className: 'flex items-center justify-between mb-2' },
+                                            e('h3', { className: 'text-xl font-bold' }, record.title),
+                                            e('span', { className: 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold' }, '✅ CONCLUÍDA')
+                                        ),
+                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 mb-3' },
+                                            e('span', null, `📍 ${record.location}`),
+                                            e('span', null, `👤 ${record.executed_by}`),
+                                            e('span', null, `🕒 ${new Date(record.executed_date).toLocaleString('pt-BR')}`)
+                                        ),
+                                        e('div', { className: 'bg-gray-50 rounded-lg p-4 mb-3' },
+                                            e('p', { className: 'font-semibold text-gray-700 mb-2' }, '📋 Detalhes do Serviço:'),
+                                            e('p', { className: 'text-gray-600 whitespace-pre-wrap' }, record.details)
+                                        ),
+                                        record.materials && e('div', { className: 'bg-blue-50 rounded-lg p-4' },
+                                            e('p', { className: 'font-semibold text-blue-700 mb-2' }, '🔧 Materiais Utilizados:'),
+                                            e('p', { className: 'text-blue-600 whitespace-pre-wrap' }, record.materials)
+                                        )
+                                    )
+                                )
+                            ),
+                            preventiveRecords.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhum registro de preventiva')
+                            )
+                        )
+                    ),
+
+                    currentTab === 'stats' && showAllFeatures && e('div', null,
+                        e('h2', { className: 'text-2xl font-bold mb-6' }, '📊 Estatísticas Gerais'),
+                        e('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6 mb-6' },
+                            e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                                e('div', { className: 'flex items-center justify-between' },
+                                    e('div', null,
+                                        e('p', { className: 'text-gray-500 text-sm' }, 'Total de OS'),
+                                        e('p', { className: 'text-3xl font-bold text-gray-800' }, stats.total)
+                                    ),
+                                    icons.clipboard()
+                                )
+                            ),
+                            e('div', { className: 'bg-yellow-50 rounded-lg shadow-md p-6' },
+                                e('div', { className: 'flex items-center justify-between' },
+                                    e('div', null,
+                                        e('p', { className: 'text-yellow-700 text-sm' }, 'Pendentes'),
+                                        e('p', { className: 'text-3xl font-bold text-yellow-800' }, stats.pendente)
+                                    ),
+                                    icons.clock()
+                                )
+                            ),
+                            e('div', { className: 'bg-blue-50 rounded-lg shadow-md p-6' },
+                                e('div', { className: 'flex items-center justify-between' },
+                                    e('div', null,
+                                        e('p', { className: 'text-blue-700 text-sm' }, 'Em Andamento'),
+                                        e('p', { className: 'text-3xl font-bold text-blue-800' }, stats.em_andamento)
+                                    ),
+                                    icons.wrench()
+                                )
+                            ),
+                            e('div', { className: 'bg-green-50 rounded-lg shadow-md p-6' },
+                                e('div', { className: 'flex items-center justify-between' },
+                                    e('div', null,
+                                        e('p', { className: 'text-green-700 text-sm' }, 'Concluídas'),
+                                        e('p', { className: 'text-3xl font-bold text-green-800' }, stats.concluida)
+                                    ),
+                                    icons.check()
                                 )
                             )
                         ),
-                        displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
-                            e('p', { className: 'text-gray-500' }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
+                        e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                            e('h3', { className: 'text-xl font-bold mb-4' }, 'Resumo de Preventivas'),
+                            e('div', { className: 'grid grid-cols-2 gap-4' },
+                                e('div', { className: 'p-4 bg-indigo-50 rounded-lg' },
+                                    e('p', { className: 'text-indigo-700 text-sm mb-1' }, 'Preventivas Programadas'),
+                                    e('p', { className: 'text-2xl font-bold text-indigo-800' }, preventiveSchedule.length)
+                                ),
+                                e('div', { className: 'p-4 bg-green-50 rounded-lg' },
+                                    e('p', { className: 'text-green-700 text-sm mb-1' }, 'Preventivas Executadas'),
+                                    e('p', { className: 'text-2xl font-bold text-green-800' }, preventiveRecords.length)
+                                )
+                            )
                         )
                     )
                 )
