@@ -259,13 +259,7 @@
             const priorityColor = (p) => p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
             const frequencyLabel = (f) => ({ diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' }[f] || f);
 
-            // Lógica de visualização baseada no role
-            const isOwner = currentUser?.role === 'owner';
-            const isMaintenance = currentUser?.role === 'maintenance';
-            const isRegularUser = currentUser?.role === 'user';
-
-            // Owner e Maintenance veem todas as OS, usuários comuns veem só as suas
-            const myOrders = (isOwner || isMaintenance) ? orders : orders.filter(o => o.created_by_id === currentUser?.id);
+            const myOrders = currentUser?.role === 'user' ? orders.filter(o => o.created_by_id === currentUser.id) : orders;
             const activeOrders = myOrders.filter(o => o.status !== 'concluida');
             const completedOrders = myOrders.filter(o => o.status === 'concluida');
             const displayOrders = (showHistory ? completedOrders : activeOrders).filter(o =>
@@ -330,8 +324,7 @@
                 );
             }
 
-            // Interface para Usuário Comum (não owner)
-            if (isRegularUser) {
+            if (currentUser.role === 'user') {
                 return e('div', { className: 'min-h-screen bg-gray-50' },
                     e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
                         e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
@@ -446,133 +439,56 @@
                     )
                 );
             }
-			// Interface para Owner e Manutenção
-            const [darkMode, setDarkMode] = useState(() => {
-                const saved = localStorage.getItem('darkMode');
-                return saved === 'true';
-            });
+			// Interface para Manutenção e Dono
+            const canEdit = currentUser.role === 'maintenance';
+            const showAllFeatures = currentUser.role === 'maintenance' || currentUser.role === 'owner';
 
-            const toggleDarkMode = () => {
-                const newMode = !darkMode;
-                setDarkMode(newMode);
-                localStorage.setItem('darkMode', newMode);
-            };
-
-            const bg = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-            const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-            const textPrimary = darkMode ? 'text-white' : 'text-gray-800';
-            const textSecondary = darkMode ? 'text-gray-300' : 'text-gray-600';
-            const border = darkMode ? 'border-gray-700' : 'border-gray-300';
-            const headerBg = darkMode ? 'bg-gray-800' : 'bg-indigo-600';
-
-            return e('div', { className: `min-h-screen ${bg}` },
-                e('header', { className: `${headerBg} text-white shadow-lg` },
+            return e('div', { className: 'min-h-screen bg-gray-50' },
+                e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
                     e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
                         e('div', { className: 'flex items-center gap-3' },
                             icons.wrench(),
                             e('div', null,
-                                e('h1', { className: 'text-2xl font-bold' }, isOwner ? 'Painel do Dono' : 'Sistema de Manutenção'),
+                                e('h1', { className: 'text-2xl font-bold' }, currentUser.role === 'owner' ? 'Painel do Dono' : 'Sistema de Manutenção'),
                                 e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
                             )
                         ),
-                        e('div', { className: 'flex items-center gap-3' },
-                            e('button', {
-                                onClick: toggleDarkMode,
-                                className: 'px-3 py-2 bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors',
-                                title: darkMode ? 'Modo Claro' : 'Modo Escuro'
-                            }, darkMode ? '☀️' : '🌙'),
-                            e('button', {
-                                onClick: () => setCurrentUser(null),
-                                className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
-                            }, icons.logout(), 'Sair')
-                        )
+                        e('button', {
+                            onClick: () => setCurrentUser(null),
+                            className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
+                        }, icons.logout(), 'Sair')
                     )
                 ),
                 e('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
                     e('div', { className: 'flex gap-3 mb-6 overflow-x-auto pb-2' },
                         e('button', {
                             onClick: () => setCurrentTab('orders'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'orders' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'orders' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                         }, icons.clipboard(), 'Ordens de Serviço'),
-                        e('button', {
+                        showAllFeatures && e('button', {
                             onClick: () => setCurrentTab('preventive-schedule'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-schedule' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-schedule' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                         }, icons.calendar(), 'Preventivas Programadas', overduePreventives.length > 0 && e('span', { className: 'bg-red-500 text-white text-xs px-2 py-1 rounded-full' }, overduePreventives.length)),
-                        e('button', {
+                        showAllFeatures && e('button', {
                             onClick: () => setCurrentTab('preventive-records'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-records' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-records' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                         }, icons.clipboard(), 'Registros de Preventivas'),
-                        e('button', {
+                        showAllFeatures && e('button', {
                             onClick: () => setCurrentTab('stats'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'stats' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'stats' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                         }, icons.chart(), 'Estatísticas')
                     ),
 
                     currentTab === 'orders' && e('div', null,
-                        isOwner && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
-                                icons.plus(), 'Nova Ordem de Serviço'
-                            ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newOrder.title,
-                                        onChange: (ev) => setNewOrder({ ...newOrder, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        placeholder: 'Ex: Ar condicionado com problema'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Descrição *'),
-                                    e('textarea', {
-                                        value: newOrder.description,
-                                        onChange: (ev) => setNewOrder({ ...newOrder, description: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        rows: 4,
-                                        placeholder: 'Descreva o problema...'
-                                    })
-                                ),
-                                e('div', { className: 'grid grid-cols-2 gap-4' },
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Setor *'),
-                                        e('input', {
-                                            type: 'text',
-                                            value: newOrder.sector,
-                                            onChange: (ev) => setNewOrder({ ...newOrder, sector: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                            placeholder: 'Ex: Produção'
-                                        })
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Prioridade'),
-                                        e('select', {
-                                            value: newOrder.priority,
-                                            onChange: (ev) => setNewOrder({ ...newOrder, priority: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
-                                        },
-                                            e('option', { value: 'baixa' }, 'Baixa'),
-                                            e('option', { value: 'media' }, 'Média'),
-                                            e('option', { value: 'alta' }, 'Alta')
-                                        )
-                                    )
-                                ),
-                                e('button', {
-                                    onClick: handleCreateOrder,
-                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
-                                }, icons.plus(), 'Criar Ordem de Serviço')
-                            )
-                        ),
                         e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
                             e('div', { className: 'flex gap-3' },
                                 e('button', {
                                     onClick: () => setShowHistory(false),
-                                    className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                                    className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                                 }, `Ativas (${activeOrders.length})`),
                                 e('button', {
                                     onClick: () => setShowHistory(true),
-                                    className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
+                                    className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
                                 }, icons.history(), `Histórico (${completedOrders.length})`)
                             ),
                             e('div', { className: 'relative' },
@@ -582,29 +498,29 @@
                                     value: searchTerm,
                                     onChange: (ev) => setSearchTerm(ev.target.value),
                                     placeholder: 'Buscar OS...',
-                                    className: `pl-10 pr-4 py-2 border ${border} rounded-lg shadow ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                    className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow'
                                 })
                             )
                         ),
                         e('div', { className: 'space-y-4' },
                             displayOrders.map(order =>
-                                e('div', { key: order.id, className: `${cardBg} rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
                                     e('div', { className: 'mb-4' },
                                         e('div', { className: 'flex items-center justify-between mb-2' },
                                             e('div', { className: 'flex items-center gap-2' },
-                                                e('h3', { className: `text-xl font-bold ${textPrimary}` }, order.title),
+                                                e('h3', { className: 'text-xl font-bold' }, order.title),
                                                 e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
                                             ),
-                                            isOwner && e('div', { className: 'flex items-center gap-1 text-sm text-gray-500' }, icons.eye(), 'Só visualização')
+                                            currentUser.role === 'owner' && e('span', { className: 'flex items-center gap-1 text-sm text-gray-500' }, icons.eye(), 'Visualização')
                                         ),
-                                        e('p', { className: `${textSecondary} mb-3` }, order.description),
-                                        e('div', { className: `flex gap-4 text-sm ${textSecondary} flex-wrap` },
+                                        e('p', { className: 'text-gray-600 mb-3' }, order.description),
+                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 flex-wrap' },
                                             e('span', null, `📍 ${order.sector}`),
                                             e('span', null, `👤 ${order.created_by_name}`),
                                             e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
                                         )
                                     ),
-                                    isMaintenance && !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
+                                    canEdit && !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
                                         e('div', { className: 'flex gap-2 flex-wrap' },
                                             e('button', {
                                                 onClick: () => handleStatusChange(order.id, 'pendente'),
@@ -620,18 +536,18 @@
                                             }, '✅ Concluída')
                                         )
                                     ),
-                                    isOwner && e('div', { className: 'pt-4 border-t mb-4' },
+                                    !canEdit && e('div', { className: 'pt-4 border-t mb-4' },
                                         e('span', { className: `px-4 py-2 rounded text-sm font-medium inline-block ${
                                             order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
                                             order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
                                             'bg-green-100 text-green-800'
                                         }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
                                     ),
-                                    isMaintenance && editingMessage === order.id ? e('div', { className: 'mt-3' },
+                                    canEdit && editingMessage === order.id ? e('div', { className: 'mt-3' },
                                         e('textarea', {
                                             value: messageText,
                                             onChange: (ev) => setMessageText(ev.target.value),
-                                            className: `w-full px-3 py-2 border ${border} rounded-lg mb-2 ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                            className: 'w-full px-3 py-2 border rounded-lg mb-2',
                                             rows: 3,
                                             placeholder: 'Ex: Já vamos aí dar uma olhada!'
                                         }),
@@ -650,62 +566,62 @@
                                             e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
                                             e('p', { className: 'text-sm text-blue-700' }, order.message)
                                         ),
-                                        isMaintenance && !showHistory && e('button', {
+                                        canEdit && !showHistory && e('button', {
                                             onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
                                             className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
                                         }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
                                     )
                                 )
                             ),
-                            displayOrders.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
+                            displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
                             )
                         )
                     ),
 
-                    currentTab === 'preventive-schedule' && e('div', null,
-                        isMaintenance && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
+                    currentTab === 'preventive-schedule' && showAllFeatures && e('div', null,
+                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
                                 icons.calendar(), 'Agendar Nova Preventiva'
                             ),
                             e('div', { className: 'space-y-4' },
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
                                     e('input', {
                                         type: 'text',
                                         value: newPreventive.title,
                                         onChange: (ev) => setNewPreventive({ ...newPreventive, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
                                     })
                                 ),
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Descrição *'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
                                     e('textarea', {
                                         value: newPreventive.description,
                                         onChange: (ev) => setNewPreventive({ ...newPreventive, description: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         rows: 3,
                                         placeholder: 'Descreva a manutenção preventiva...'
                                     })
                                 ),
                                 e('div', { className: 'grid grid-cols-3 gap-4' },
                                     e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Local *'),
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
                                         e('input', {
                                             type: 'text',
                                             value: newPreventive.location,
                                             onChange: (ev) => setNewPreventive({ ...newPreventive, location: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                            className: 'w-full px-4 py-2 border rounded-lg',
                                             placeholder: 'Ex: Aviários 1,2,3,4'
                                         })
                                     ),
                                     e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Frequência'),
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Frequência'),
                                         e('select', {
                                             value: newPreventive.frequency,
                                             onChange: (ev) => setNewPreventive({ ...newPreventive, frequency: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                            className: 'w-full px-4 py-2 border rounded-lg'
                                         },
                                             e('option', { value: 'diario' }, 'Diário'),
                                             e('option', { value: 'semanal' }, 'Semanal'),
@@ -716,12 +632,12 @@
                                         )
                                     ),
                                     e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Próxima Data *'),
+                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Próxima Data *'),
                                         e('input', {
                                             type: 'date',
                                             value: newPreventive.next_date,
                                             onChange: (ev) => setNewPreventive({ ...newPreventive, next_date: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                            className: 'w-full px-4 py-2 border rounded-lg'
                                         })
                                     )
                                 ),
@@ -740,75 +656,75 @@
                         e('div', { className: 'space-y-4' },
                             preventiveSchedule.map(prev => {
                                 const isOverdue = new Date(prev.next_date) < new Date();
-                                return e('div', { key: prev.id, className: `${cardBg} rounded-lg shadow-md p-6 ${isOverdue ? 'border-2 border-red-400' : ''}` },
+                                return e('div', { key: prev.id, className: `bg-white rounded-lg shadow-md p-6 ${isOverdue ? 'border-2 border-red-400' : ''}` },
                                     e('div', { className: 'flex justify-between items-start mb-3' },
                                         e('div', { className: 'flex-1' },
                                             e('div', { className: 'flex items-center gap-2 mb-2' },
-                                                e('h3', { className: `text-xl font-bold ${textPrimary}` }, prev.title),
+                                                e('h3', { className: 'text-xl font-bold' }, prev.title),
                                                 isOverdue && e('span', { className: 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold' }, 'ATRASADA')
                                             ),
-                                            e('p', { className: `${textSecondary} mb-2` }, prev.description),
-                                            e('div', { className: `flex gap-4 text-sm ${textSecondary}` },
+                                            e('p', { className: 'text-gray-600 mb-2' }, prev.description),
+                                            e('div', { className: 'flex gap-4 text-sm text-gray-500' },
                                                 e('span', null, `📍 ${prev.location}`),
                                                 e('span', null, `🔄 ${frequencyLabel(prev.frequency)}`),
                                                 e('span', { className: isOverdue ? 'text-red-600 font-semibold' : '' }, `📅 ${new Date(prev.next_date).toLocaleDateString('pt-BR')}`)
                                             )
                                         ),
-                                        isMaintenance && e('button', {
+                                        canEdit && e('button', {
                                             onClick: () => handleDeletePreventive(prev.id),
                                             className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
                                         }, '🗑️ Excluir')
                                     )
                                 );
                             }),
-                            preventiveSchedule.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, 'Nenhuma preventiva agendada')
+                            preventiveSchedule.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhuma preventiva agendada')
                             )
                         )
                     ),
 
-                    currentTab === 'preventive-records' && e('div', null,
-                        isMaintenance && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
+                    currentTab === 'preventive-records' && showAllFeatures && e('div', null,
+                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
                                 icons.clipboard(), 'Registrar Preventiva Executada'
                             ),
                             e('div', { className: 'space-y-4' },
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
                                     e('input', {
                                         type: 'text',
                                         value: newRecord.title,
                                         onChange: (ev) => setNewRecord({ ...newRecord, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
                                     })
                                 ),
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Local *'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
                                     e('input', {
                                         type: 'text',
                                         value: newRecord.location,
                                         onChange: (ev) => setNewRecord({ ...newRecord, location: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         placeholder: 'Ex: Aviários 1,2,3,4'
                                     })
                                 ),
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Detalhes do Serviço *'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Detalhes do Serviço *'),
                                     e('textarea', {
                                         value: newRecord.details,
                                         onChange: (ev) => setNewRecord({ ...newRecord, details: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         rows: 4,
                                         placeholder: 'Descreva tudo que foi feito: correntes lubrificadas, rolamentos verificados, etc...'
                                     })
                                 ),
                                 e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Materiais Utilizados (opcional)'),
+                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Materiais Utilizados (opcional)'),
                                     e('textarea', {
                                         value: newRecord.materials,
                                         onChange: (ev) => setNewRecord({ ...newRecord, materials: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        className: 'w-full px-4 py-2 border rounded-lg',
                                         rows: 3,
                                         placeholder: 'Ex: 2L óleo lubrificante, 3 lâmpadas LED 20W, graxa industrial...'
                                     })
@@ -821,446 +737,47 @@
                         ),
                         e('div', { className: 'space-y-4' },
                             preventiveRecords.map(record =>
-                                e('div', { key: record.id, className: `${cardBg} rounded-lg shadow-md p-6` },
+                                e('div', { key: record.id, className: 'bg-white rounded-lg shadow-md p-6' },
                                     e('div', { className: 'mb-4' },
                                         e('div', { className: 'flex items-center justify-between mb-2' },
-                                            e('h3', { className: `text-xl font-bold ${textPrimary}` }, record.title),
+                                            e('h3', { className: 'text-xl font-bold' }, record.title),
                                             e('span', { className: 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold' }, '✅ CONCLUÍDA')
                                         ),
-                                        e('div', { className: `flex gap-4 text-sm ${textSecondary} mb-3` },
+                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 mb-3' },
                                             e('span', null, `📍 ${record.location}`),
                                             e('span', null, `👤 ${record.executed_by}`),
                                             e('span', null, `🕒 ${new Date(record.executed_date).toLocaleString('pt-BR')}`)
                                         ),
-                                        e('div', { className: `${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-3` },
-                                            e('p', { className: `font-semibold ${textPrimary} mb-2` }, '📋 Detalhes do Serviço:'),
-                                            e('p', { className: `${textSecondary} whitespace-pre-wrap` }, record.details)
+                                        e('div', { className: 'bg-gray-50 rounded-lg p-4 mb-3' },
+                                            e('p', { className: 'font-semibold text-gray-700 mb-2' }, '📋 Detalhes do Serviço:'),
+                                            e('p', { className: 'text-gray-600 whitespace-pre-wrap' }, record.details)
                                         ),
-                                        record.materials && e('div', { className: `${darkMode ? 'bg-blue-900' : 'bg-blue-50'} rounded-lg p-4` },
-                                            e('p', { className: `font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-700'} mb-2` }, '🔧 Materiais Utilizados:'),
-                                            e('p', { className: `${darkMode ? 'text-blue-200' : 'text-blue-600'} whitespace-pre-wrap` }, record.materials)
+                                        record.materials && e('div', { className: 'bg-blue-50 rounded-lg p-4' },
+                                            e('p', { className: 'font-semibold text-blue-700 mb-2' }, '🔧 Materiais Utilizados:'),
+                                            e('p', { className: 'text-blue-600 whitespace-pre-wrap' }, record.materials)
                                         )
                                     )
                                 )
                             ),
-                            preventiveRecords.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, 'Nenhum registro de preventiva')
-                            )
-							// Interface para Owner e Manutenção
-            const [darkMode, setDarkMode] = useState(() => {
-                const saved = localStorage.getItem('darkMode');
-                return saved === 'true';
-            });
-
-            const toggleDarkMode = () => {
-                const newMode = !darkMode;
-                setDarkMode(newMode);
-                localStorage.setItem('darkMode', newMode);
-            };
-
-            const bg = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-            const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-            const textPrimary = darkMode ? 'text-white' : 'text-gray-800';
-            const textSecondary = darkMode ? 'text-gray-300' : 'text-gray-600';
-            const border = darkMode ? 'border-gray-700' : 'border-gray-300';
-            const headerBg = darkMode ? 'bg-gray-800' : 'bg-indigo-600';
-
-            return e('div', { className: `min-h-screen ${bg}` },
-                e('header', { className: `${headerBg} text-white shadow-lg` },
-                    e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
-                        e('div', { className: 'flex items-center gap-3' },
-                            icons.wrench(),
-                            e('div', null,
-                                e('h1', { className: 'text-2xl font-bold' }, isOwner ? 'Painel do Dono' : 'Sistema de Manutenção'),
-                                e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
-                            )
-                        ),
-                        e('div', { className: 'flex items-center gap-3' },
-                            e('button', {
-                                onClick: toggleDarkMode,
-                                className: 'px-3 py-2 bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors',
-                                title: darkMode ? 'Modo Claro' : 'Modo Escuro'
-                            }, darkMode ? '☀️' : '🌙'),
-                            e('button', {
-                                onClick: () => setCurrentUser(null),
-                                className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
-                            }, icons.logout(), 'Sair')
-                        )
-                    )
-                ),
-                e('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
-                    e('div', { className: 'flex gap-3 mb-6 overflow-x-auto pb-2' },
-                        e('button', {
-                            onClick: () => setCurrentTab('orders'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'orders' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                        }, icons.clipboard(), 'Ordens de Serviço'),
-                        e('button', {
-                            onClick: () => setCurrentTab('preventive-schedule'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-schedule' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                        }, icons.calendar(), 'Preventivas Programadas', overduePreventives.length > 0 && e('span', { className: 'bg-red-500 text-white text-xs px-2 py-1 rounded-full' }, overduePreventives.length)),
-                        e('button', {
-                            onClick: () => setCurrentTab('preventive-records'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-records' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                        }, icons.clipboard(), 'Registros de Preventivas'),
-                        e('button', {
-                            onClick: () => setCurrentTab('stats'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'stats' ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                        }, icons.chart(), 'Estatísticas')
-                    ),
-
-                    currentTab === 'orders' && e('div', null,
-                        isOwner && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
-                                icons.plus(), 'Nova Ordem de Serviço'
-                            ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newOrder.title,
-                                        onChange: (ev) => setNewOrder({ ...newOrder, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        placeholder: 'Ex: Ar condicionado com problema'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Descrição *'),
-                                    e('textarea', {
-                                        value: newOrder.description,
-                                        onChange: (ev) => setNewOrder({ ...newOrder, description: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        rows: 4,
-                                        placeholder: 'Descreva o problema...'
-                                    })
-                                ),
-                                e('div', { className: 'grid grid-cols-2 gap-4' },
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Setor *'),
-                                        e('input', {
-                                            type: 'text',
-                                            value: newOrder.sector,
-                                            onChange: (ev) => setNewOrder({ ...newOrder, sector: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                            placeholder: 'Ex: Produção'
-                                        })
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Prioridade'),
-                                        e('select', {
-                                            value: newOrder.priority,
-                                            onChange: (ev) => setNewOrder({ ...newOrder, priority: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
-                                        },
-                                            e('option', { value: 'baixa' }, 'Baixa'),
-                                            e('option', { value: 'media' }, 'Média'),
-                                            e('option', { value: 'alta' }, 'Alta')
-                                        )
-                                    )
-                                ),
-                                e('button', {
-                                    onClick: handleCreateOrder,
-                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
-                                }, icons.plus(), 'Criar Ordem de Serviço')
-                            )
-                        ),
-                        e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
-                            e('div', { className: 'flex gap-3' },
-                                e('button', {
-                                    onClick: () => setShowHistory(false),
-                                    className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                                }, `Ativas (${activeOrders.length})`),
-                                e('button', {
-                                    onClick: () => setShowHistory(true),
-                                    className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : `${cardBg} ${textPrimary} shadow`}`
-                                }, icons.history(), `Histórico (${completedOrders.length})`)
-                            ),
-                            e('div', { className: 'relative' },
-                                e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
-                                e('input', {
-                                    type: 'text',
-                                    value: searchTerm,
-                                    onChange: (ev) => setSearchTerm(ev.target.value),
-                                    placeholder: 'Buscar OS...',
-                                    className: `pl-10 pr-4 py-2 border ${border} rounded-lg shadow ${darkMode ? 'bg-gray-700 text-white' : ''}`
-                                })
-                            )
-                        ),
-                        e('div', { className: 'space-y-4' },
-                            displayOrders.map(order =>
-                                e('div', { key: order.id, className: `${cardBg} rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
-                                    e('div', { className: 'mb-4' },
-                                        e('div', { className: 'flex items-center justify-between mb-2' },
-                                            e('div', { className: 'flex items-center gap-2' },
-                                                e('h3', { className: `text-xl font-bold ${textPrimary}` }, order.title),
-                                                e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
-                                            ),
-                                            isOwner && e('div', { className: 'flex items-center gap-1 text-sm text-gray-500' }, icons.eye(), 'Só visualização')
-                                        ),
-                                        e('p', { className: `${textSecondary} mb-3` }, order.description),
-                                        e('div', { className: `flex gap-4 text-sm ${textSecondary} flex-wrap` },
-                                            e('span', null, `📍 ${order.sector}`),
-                                            e('span', null, `👤 ${order.created_by_name}`),
-                                            e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
-                                        )
-                                    ),
-                                    isMaintenance && !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
-                                        e('div', { className: 'flex gap-2 flex-wrap' },
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'pendente'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '⏳ Pendente'),
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'em_andamento'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '🔧 Em Andamento'),
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'concluida'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '✅ Concluída')
-                                        )
-                                    ),
-                                    isOwner && e('div', { className: 'pt-4 border-t mb-4' },
-                                        e('span', { className: `px-4 py-2 rounded text-sm font-medium inline-block ${
-                                            order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
-                                            order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-green-100 text-green-800'
-                                        }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
-                                    ),
-                                    isMaintenance && editingMessage === order.id ? e('div', { className: 'mt-3' },
-                                        e('textarea', {
-                                            value: messageText,
-                                            onChange: (ev) => setMessageText(ev.target.value),
-                                            className: `w-full px-3 py-2 border ${border} rounded-lg mb-2 ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                            rows: 3,
-                                            placeholder: 'Ex: Já vamos aí dar uma olhada!'
-                                        }),
-                                        e('div', { className: 'flex gap-2' },
-                                            e('button', {
-                                                onClick: () => handleSaveMessage(order.id),
-                                                className: 'px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700'
-                                            }, 'Enviar'),
-                                            e('button', {
-                                                onClick: () => { setEditingMessage(null); setMessageText(''); },
-                                                className: 'px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'
-                                            }, 'Cancelar')
-                                        )
-                                    ) : e('div', null,
-                                        order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2' },
-                                            e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
-                                            e('p', { className: 'text-sm text-blue-700' }, order.message)
-                                        ),
-                                        isMaintenance && !showHistory && e('button', {
-                                            onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
-                                            className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
-                                        }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
-                                    )
-                                )
-                            ),
-                            displayOrders.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
-                            )
-                        )
-                    ),
-					currentTab === 'preventive-schedule' && e('div', null,
-                        isMaintenance && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
-                                icons.calendar(), 'Agendar Nova Preventiva'
-                            ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newPreventive.title,
-                                        onChange: (ev) => setNewPreventive({ ...newPreventive, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Descrição *'),
-                                    e('textarea', {
-                                        value: newPreventive.description,
-                                        onChange: (ev) => setNewPreventive({ ...newPreventive, description: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        rows: 3,
-                                        placeholder: 'Descreva a manutenção preventiva...'
-                                    })
-                                ),
-                                e('div', { className: 'grid grid-cols-3 gap-4' },
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Local *'),
-                                        e('input', {
-                                            type: 'text',
-                                            value: newPreventive.location,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, location: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                            placeholder: 'Ex: Aviários 1,2,3,4'
-                                        })
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Frequência'),
-                                        e('select', {
-                                            value: newPreventive.frequency,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, frequency: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
-                                        },
-                                            e('option', { value: 'diario' }, 'Diário'),
-                                            e('option', { value: 'semanal' }, 'Semanal'),
-                                            e('option', { value: 'mensal' }, 'Mensal'),
-                                            e('option', { value: 'trimestral' }, 'Trimestral'),
-                                            e('option', { value: 'semestral' }, 'Semestral'),
-                                            e('option', { value: 'anual' }, 'Anual')
-                                        )
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Próxima Data *'),
-                                        e('input', {
-                                            type: 'date',
-                                            value: newPreventive.next_date,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, next_date: ev.target.value }),
-                                            className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`
-                                        })
-                                    )
-                                ),
-                                e('button', {
-                                    onClick: handleCreatePreventive,
-                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
-                                }, icons.plus(), 'Agendar Preventiva')
-                            )
-                        ),
-                        overduePreventives.length > 0 && e('div', { className: 'bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6' },
-                            e('div', { className: 'flex items-center gap-2 mb-2' },
-                                icons.bell(),
-                                e('h3', { className: 'font-bold text-red-800' }, `⚠️ ${overduePreventives.length} Preventiva(s) Atrasada(s)!`)
-                            )
-                        ),
-                        e('div', { className: 'space-y-4' },
-                            preventiveSchedule.map(prev => {
-                                const isOverdue = new Date(prev.next_date) < new Date();
-                                return e('div', { key: prev.id, className: `${cardBg} rounded-lg shadow-md p-6 ${isOverdue ? 'border-2 border-red-400' : ''}` },
-                                    e('div', { className: 'flex justify-between items-start mb-3' },
-                                        e('div', { className: 'flex-1' },
-                                            e('div', { className: 'flex items-center gap-2 mb-2' },
-                                                e('h3', { className: `text-xl font-bold ${textPrimary}` }, prev.title),
-                                                isOverdue && e('span', { className: 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold' }, 'ATRASADA')
-                                            ),
-                                            e('p', { className: `${textSecondary} mb-2` }, prev.description),
-                                            e('div', { className: `flex gap-4 text-sm ${textSecondary}` },
-                                                e('span', null, `📍 ${prev.location}`),
-                                                e('span', null, `🔄 ${frequencyLabel(prev.frequency)}`),
-                                                e('span', { className: isOverdue ? 'text-red-600 font-semibold' : '' }, `📅 ${new Date(prev.next_date).toLocaleDateString('pt-BR')}`)
-                                            )
-                                        ),
-                                        isMaintenance && e('button', {
-                                            onClick: () => handleDeletePreventive(prev.id),
-                                            className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
-                                        }, '🗑️ Excluir')
-                                    )
-                                );
-                            }),
-                            preventiveSchedule.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, 'Nenhuma preventiva agendada')
+                            preventiveRecords.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
+                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhum registro de preventiva')
                             )
                         )
                     ),
 
-                    currentTab === 'preventive-records' && e('div', null,
-                        isMaintenance && e('div', { className: `${cardBg} rounded-lg shadow-md p-6 mb-6` },
-                            e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6 flex items-center gap-2` },
-                                icons.clipboard(), 'Registrar Preventiva Executada'
-                            ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Título *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newRecord.title,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, title: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Local *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newRecord.location,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, location: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        placeholder: 'Ex: Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Detalhes do Serviço *'),
-                                    e('textarea', {
-                                        value: newRecord.details,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, details: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        rows: 4,
-                                        placeholder: 'Descreva tudo que foi feito: correntes lubrificadas, rolamentos verificados, etc...'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: `block text-sm font-medium ${textSecondary} mb-2` }, 'Materiais Utilizados (opcional)'),
-                                    e('textarea', {
-                                        value: newRecord.materials,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, materials: ev.target.value }),
-                                        className: `w-full px-4 py-2 border ${border} rounded-lg ${darkMode ? 'bg-gray-700 text-white' : ''}`,
-                                        rows: 3,
-                                        placeholder: 'Ex: 2L óleo lubrificante, 3 lâmpadas LED 20W, graxa industrial...'
-                                    })
-                                ),
-                                e('button', {
-                                    onClick: handleCreateRecord,
-                                    className: 'w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center gap-2'
-                                }, icons.check(), 'Salvar Registro')
-                            )
-                        ),
-                        e('div', { className: 'space-y-4' },
-                            preventiveRecords.map(record =>
-                                e('div', { key: record.id, className: `${cardBg} rounded-lg shadow-md p-6` },
-                                    e('div', { className: 'mb-4' },
-                                        e('div', { className: 'flex items-center justify-between mb-2' },
-                                            e('h3', { className: `text-xl font-bold ${textPrimary}` }, record.title),
-                                            e('span', { className: 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold' }, '✅ CONCLUÍDA')
-                                        ),
-                                        e('div', { className: `flex gap-4 text-sm ${textSecondary} mb-3` },
-                                            e('span', null, `📍 ${record.location}`),
-                                            e('span', null, `👤 ${record.executed_by}`),
-                                            e('span', null, `🕒 ${new Date(record.executed_date).toLocaleString('pt-BR')}`)
-                                        ),
-                                        e('div', { className: `${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-3` },
-                                            e('p', { className: `font-semibold ${textPrimary} mb-2` }, '📋 Detalhes do Serviço:'),
-                                            e('p', { className: `${textSecondary} whitespace-pre-wrap` }, record.details)
-                                        ),
-                                        record.materials && e('div', { className: `${darkMode ? 'bg-blue-900' : 'bg-blue-50'} rounded-lg p-4` },
-                                            e('p', { className: `font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-700'} mb-2` }, '🔧 Materiais Utilizados:'),
-                                            e('p', { className: `${darkMode ? 'text-blue-200' : 'text-blue-600'} whitespace-pre-wrap` }, record.materials)
-                                        )
-                                    )
-                                )
-                            ),
-                            preventiveRecords.length === 0 && e('div', { className: `${cardBg} rounded-lg p-12 text-center shadow` },
-                                e('p', { className: `${textSecondary} text-lg` }, 'Nenhum registro de preventiva')
-                            )
-                        )
-                    ),
-
-                    currentTab === 'stats' && e('div', null,
-                        e('h2', { className: `text-2xl font-bold ${textPrimary} mb-6` }, '📊 Estatísticas Gerais'),
+                    currentTab === 'stats' && showAllFeatures && e('div', null,
+                        e('h2', { className: 'text-2xl font-bold mb-6' }, '📊 Estatísticas Gerais'),
                         e('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6 mb-6' },
-                            e('div', { className: `${cardBg} rounded-lg shadow-md p-6` },
+                            e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: `${textSecondary} text-sm` }, 'Total de OS'),
-                                        e('p', { className: `text-3xl font-bold ${textPrimary}` }, stats.total)
+                                        e('p', { className: 'text-gray-500 text-sm' }, 'Total de OS'),
+                                        e('p', { className: 'text-3xl font-bold text-gray-800' }, stats.total)
                                     ),
                                     icons.clipboard()
                                 )
                             ),
-                            e('div', { className: `${darkMode ? 'bg-yellow-900' : 'bg-yellow-50'} rounded-lg shadow-md p-6` },
+                            e('div', { className: 'bg-yellow-50 rounded-lg shadow-md p-6' },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
                                         e('p', { className: 'text-yellow-700 text-sm' }, 'Pendentes'),
@@ -1269,7 +786,7 @@
                                     icons.clock()
                                 )
                             ),
-                            e('div', { className: `${darkMode ? 'bg-blue-900' : 'bg-blue-50'} rounded-lg shadow-md p-6` },
+                            e('div', { className: 'bg-blue-50 rounded-lg shadow-md p-6' },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
                                         e('p', { className: 'text-blue-700 text-sm' }, 'Em Andamento'),
@@ -1278,7 +795,7 @@
                                     icons.wrench()
                                 )
                             ),
-                            e('div', { className: `${darkMode ? 'bg-green-900' : 'bg-green-50'} rounded-lg shadow-md p-6` },
+                            e('div', { className: 'bg-green-50 rounded-lg shadow-md p-6' },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
                                         e('p', { className: 'text-green-700 text-sm' }, 'Concluídas'),
@@ -1288,14 +805,14 @@
                                 )
                             )
                         ),
-                        e('div', { className: `${cardBg} rounded-lg shadow-md p-6` },
-                            e('h3', { className: `text-xl font-bold ${textPrimary} mb-4` }, 'Resumo de Preventivas'),
+                        e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                            e('h3', { className: 'text-xl font-bold mb-4' }, 'Resumo de Preventivas'),
                             e('div', { className: 'grid grid-cols-2 gap-4' },
-                                e('div', { className: `p-4 ${darkMode ? 'bg-indigo-900' : 'bg-indigo-50'} rounded-lg` },
+                                e('div', { className: 'p-4 bg-indigo-50 rounded-lg' },
                                     e('p', { className: 'text-indigo-700 text-sm mb-1' }, 'Preventivas Programadas'),
                                     e('p', { className: 'text-2xl font-bold text-indigo-800' }, preventiveSchedule.length)
                                 ),
-                                e('div', { className: `p-4 ${darkMode ? 'bg-green-900' : 'bg-green-50'} rounded-lg` },
+                                e('div', { className: 'p-4 bg-green-50 rounded-lg' },
                                     e('p', { className: 'text-green-700 text-sm mb-1' }, 'Preventivas Executadas'),
                                     e('p', { className: 'text-2xl font-bold text-green-800' }, preventiveRecords.length)
                                 )
