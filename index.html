@@ -3,18 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de OS - Manutenção Completo</title>
+    <title>Sistema de OS - Manutenção</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .slide-in { animation: slideIn 0.3s ease-out; }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden;
+        }
+        
+        /* Animações de entrada */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Classes de animação */
+        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out forwards; }
+        .animate-fadeInDown { animation: fadeInDown 0.6s ease-out forwards; }
+        .animate-fadeIn { animation: fadeIn 0.8s ease-out forwards; }
+        .animate-slideInLeft { animation: slideInLeft 0.6s ease-out forwards; }
+        .animate-slideInRight { animation: slideInRight 0.6s ease-out forwards; }
+        .animate-scaleIn { animation: scaleIn 0.5s ease-out forwards; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-bounce { animation: bounce 2s infinite; }
+        
+        /* Delays de animação */
+        .delay-100 { animation-delay: 0.1s; opacity: 0; }
+        .delay-200 { animation-delay: 0.2s; opacity: 0; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .delay-400 { animation-delay: 0.4s; opacity: 0; }
+        .delay-500 { animation-delay: 0.5s; opacity: 0; }
+        .delay-600 { animation-delay: 0.6s; opacity: 0; }
+        
+        /* Efeito Parallax */
+        .parallax-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .parallax-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Gradientes modernos */
+        .gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .gradient-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .gradient-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        /* Hover effects */
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hover-glow {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-glow:hover {
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
+        }
+        
+        /* Shimmer effect para loading */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        /* Scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        /* Botão flutuante de ajuda */
+        .help-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .help-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+        
+        /* Modal ajuda */
+        .help-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .help-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .help-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .help-modal.active .help-content {
+            transform: scale(1);
+        }
+        
+        /* Cards modernos */
+        .modern-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .modern-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Input moderno */
+        .modern-input {
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 14px 18px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+        
+        .modern-input:focus {
+            background: white;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        
+        /* Botão moderno */
+        .modern-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modern-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+        
+        .modern-button:hover::before {
+            left: 100%;
+        }
+        
+        .modern-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .modern-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Badge moderno */
+        .modern-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        /* Dark mode */
+        .dark .modern-card {
+            background: #1f2937;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark .modern-input {
+            background: #374151;
+            color: white;
+        }
+        
+        .dark .modern-input:focus {
+            background: #4b5563;
+        }
     </style>
 </head>
 <body>
@@ -29,7 +361,6 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         const { useState, useEffect, createElement: e } = React;
-
         // Ícones SVG
         const icons = {
             wrench: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
@@ -90,9 +421,167 @@
             eye: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
                 e('path', { d: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' }),
                 e('circle', { cx: 12, cy: 12, r: 3 })
+            ),
+            help: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('circle', { cx: 12, cy: 12, r: 10 }),
+                e('path', { d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' }),
+                e('line', { x1: 12, y1: 17, x2: 12.01, y2: 17 })
+            ),
+            moon: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('path', { d: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' })
+            ),
+            sun: () => e('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('circle', { cx: 12, cy: 12, r: 5 }),
+                e('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
+                e('line', { x1: 12, y1: 21, x2: 12, y2: 23 }),
+                e('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
+                e('line', { x1: 18.36, y1: 18.36, x2: 19.78, y2: 19.78 }),
+                e('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
+                e('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
+                e('line', { x1: 4.22, y1: 19.78, x2: 5.64, y2: 18.36 }),
+                e('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 })
+            ),
+            x: () => e('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                e('line', { x1: 18, y1: 6, x2: 6, y2: 18 }),
+                e('line', { x1: 6, y1: 6, x2: 18, y2: 18 })
             )
         };
-		function MaintenanceApp() {
+
+        // Componente de Background Parallax
+        const ParallaxBackground = () => {
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+            useEffect(() => {
+                const handleMouseMove = (e) => {
+                    setMousePos({
+                        x: (e.clientX / window.innerWidth - 0.5) * 20,
+                        y: (e.clientY / window.innerHeight - 0.5) * 20
+                    });
+                };
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => window.removeEventListener('mousemove', handleMouseMove);
+            }, []);
+
+            return e('div', { className: 'parallax-bg' },
+                e('div', { 
+                    className: 'parallax-layer',
+                    style: { transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }
+                },
+                    e('div', { className: 'parallax-circle', style: { width: '300px', height: '300px', top: '10%', left: '10%', animationDelay: '0s' }}),
+                    e('div', { className: 'parallax-circle', style: { width: '200px', height: '200px', top: '60%', right: '15%', animationDelay: '1s' }}),
+                    e('div', { className: 'parallax-circle', style: { width: '150px', height: '150px', bottom: '20%', left: '30%', animationDelay: '2s' }})
+                ),
+                e('div', { 
+                    className: 'parallax-layer',
+                    style: { transform: `translate(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px)` }
+                },
+                    e('div', { className: 'parallax-circle', style: { width: '250px', height: '250px', top: '40%', right: '25%', animationDelay: '0.5s' }}),
+                    e('div', { className: 'parallax-circle', style: { width: '180px', height: '180px', bottom: '10%', right: '10%', animationDelay: '1.5s' }})
+                )
+            );
+        };
+
+        // Componente de Modal de Ajuda
+        const HelpModal = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+
+            return e('div', { className: `help-modal ${isOpen ? 'active' : ''}`, onClick: onClose },
+                e('div', { className: 'help-content animate-scaleIn', onClick: (e) => e.stopPropagation() },
+                    e('div', { className: 'flex justify-between items-center mb-6' },
+                        e('h2', { className: 'text-3xl font-bold gradient-primary bg-clip-text text-transparent' }, '❓ Central de Ajuda'),
+                        e('button', { onClick: onClose, className: 'p-2 hover:bg-gray-100 rounded-full transition-colors' },
+                            icons.x()
+                        )
+                    ),
+                    e('div', { className: 'space-y-6' },
+                        e('div', { className: 'animate-fadeInUp' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '🔐', 'Como fazer login?'
+                            ),
+                            e('p', { className: 'text-gray-600 mb-2' }, 'Use suas credenciais fornecidas pela empresa:'),
+                            e('ul', { className: 'list-disc list-inside text-gray-600 space-y-1 ml-4' },
+                                e('li', null, 'Digite seu usuário no campo "Usuário"'),
+                                e('li', null, 'Digite sua senha no campo "Senha"'),
+                                e('li', null, 'Clique em "Entrar" ou pressione Enter')
+                            )
+                        ),
+                        e('div', { className: 'animate-fadeInUp delay-100' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '📝', 'Como criar uma Ordem de Serviço?'
+                            ),
+                            e('p', { className: 'text-gray-600 mb-2' }, 'Para usuários comuns:'),
+                            e('ul', { className: 'list-disc list-inside text-gray-600 space-y-1 ml-4' },
+                                e('li', null, 'Preencha o título do problema'),
+                                e('li', null, 'Descreva detalhadamente o que aconteceu'),
+                                e('li', null, 'Informe o setor onde o problema está'),
+                                e('li', null, 'Escolha a prioridade (Baixa, Média ou Alta)'),
+                                e('li', null, 'Clique em "Criar Ordem de Serviço"')
+                            )
+                        ),
+                        e('div', { className: 'animate-fadeInUp delay-200' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '🔧', 'Como funciona para a Manutenção?'
+                            ),
+                            e('ul', { className: 'list-disc list-inside text-gray-600 space-y-1 ml-4' },
+                                e('li', null, 'Visualiza todas as OS criadas'),
+                                e('li', null, 'Pode alterar status: Pendente → Em Andamento → Concluída'),
+                                e('li', null, 'Pode enviar mensagens para os usuários'),
+                                e('li', null, 'Gerencia preventivas programadas'),
+                                e('li', null, 'Registra manutenções executadas')
+                            )
+                        ),
+                        e('div', { className: 'animate-fadeInUp delay-300' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '📊', 'O que o Dono/Gerente pode fazer?'
+                            ),
+                            e('ul', { className: 'list-disc list-inside text-gray-600 space-y-1 ml-4' },
+                                e('li', null, 'Ver todas as OS de todos os usuários'),
+                                e('li', null, 'Criar suas próprias OS'),
+                                e('li', null, 'Acompanhar preventivas programadas'),
+                                e('li', null, 'Ver estatísticas e histórico completo'),
+                                e('li', null, 'Modo visualização (não pode alterar status)')
+                            )
+                        ),
+                        e('div', { className: 'animate-fadeInUp delay-400' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '🌙', 'Como usar o Modo Escuro?'
+                            ),
+                            e('p', { className: 'text-gray-600' }, 
+                                'Clique no ícone de lua/sol no canto superior direito. Sua preferência será salva automaticamente.'
+                            )
+                        ),
+                        e('div', { className: 'animate-fadeInUp delay-500' },
+                            e('h3', { className: 'text-xl font-bold mb-3 flex items-center gap-2' },
+                                '💾', 'Os dados são salvos?'
+                            ),
+                            e('p', { className: 'text-gray-600' }, 
+                                'Sim! Todos os dados são salvos permanentemente no banco de dados e ficam disponíveis para sempre.'
+                            )
+                        ),
+                        e('div', { className: 'mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl animate-fadeInUp delay-600' },
+                            e('h3', { className: 'text-lg font-bold mb-2 flex items-center gap-2' },
+                                '💡', 'Dica:'
+                            ),
+                            e('p', { className: 'text-gray-700' },
+                                'Para uma melhor experiência, use navegadores modernos como Chrome, Firefox, Edge ou Safari.'
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        // Botão flutuante de ajuda
+        const HelpButton = ({ onClick }) => {
+            return e('button', {
+                className: 'help-button animate-bounce',
+                onClick: onClick,
+                title: 'Precisa de ajuda?'
+            },
+                icons.help()
+            );
+        };
+        function MaintenanceApp() {
             const [currentUser, setCurrentUser] = useState(null);
             const [currentTab, setCurrentTab] = useState('orders');
             const [orders, setOrders] = useState([]);
@@ -110,6 +599,18 @@
             const [messageText, setMessageText] = useState('');
             const [lastOrderCount, setLastOrderCount] = useState(0);
             const [stats, setStats] = useState({ total: 0, pendente: 0, em_andamento: 0, concluida: 0 });
+            const [showHelp, setShowHelp] = useState(false);
+
+            const [darkMode, setDarkMode] = useState(() => {
+                const saved = localStorage.getItem('darkMode');
+                return saved === 'true';
+            });
+
+            const toggleDarkMode = () => {
+                const newMode = !darkMode;
+                setDarkMode(newMode);
+                localStorage.setItem('darkMode', newMode);
+            };
 
             useEffect(() => {
                 loadData();
@@ -259,7 +760,11 @@
             const priorityColor = (p) => p === 'alta' ? 'bg-red-100 text-red-800' : p === 'media' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
             const frequencyLabel = (f) => ({ diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' }[f] || f);
 
-            const myOrders = currentUser?.role === 'user' ? orders.filter(o => o.created_by_id === currentUser.id) : orders;
+            const isOwner = currentUser?.role === 'owner';
+            const isMaintenance = currentUser?.role === 'maintenance';
+            const isRegularUser = currentUser?.role === 'user';
+
+            const myOrders = (isOwner || isMaintenance) ? orders : orders.filter(o => o.created_by_id === currentUser?.id);
             const activeOrders = myOrders.filter(o => o.status !== 'concluida');
             const completedOrders = myOrders.filter(o => o.status === 'concluida');
             const displayOrders = (showHistory ? completedOrders : activeOrders).filter(o =>
@@ -269,552 +774,686 @@
             );
 
             const overduePreventives = preventiveSchedule.filter(p => new Date(p.next_date) < new Date());
-			if (loading) {
-                return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center' },
-                    e('div', { className: 'text-center' },
-                        e('div', { className: 'mb-4' }, icons.wrench()),
-                        e('p', { className: 'text-xl text-gray-700' }, 'Carregando sistema...')
+
+            const bg = darkMode ? 'bg-gray-900' : 'bg-gray-50';
+            const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
+            const textPrimary = darkMode ? 'text-white' : 'text-gray-800';
+            const textSecondary = darkMode ? 'text-gray-300' : 'text-gray-600';
+            const border = darkMode ? 'border-gray-700' : 'border-gray-300';
+
+            if (loading) {
+                return e('div', { className: `min-h-screen ${bg} flex items-center justify-center` },
+                    e(ParallaxBackground),
+                    e('div', { className: 'text-center z-10' },
+                        e('div', { className: 'animate-float mb-6' }, icons.wrench()),
+                        e('p', { className: `text-2xl font-bold ${textPrimary} animate-pulse` }, 'Carregando sistema...'),
+                        e('div', { className: 'mt-4 flex gap-2 justify-center' },
+                            e('div', { className: 'w-3 h-3 bg-indigo-600 rounded-full animate-bounce', style: { animationDelay: '0s' }}),
+                            e('div', { className: 'w-3 h-3 bg-indigo-600 rounded-full animate-bounce', style: { animationDelay: '0.2s' }}),
+                            e('div', { className: 'w-3 h-3 bg-indigo-600 rounded-full animate-bounce', style: { animationDelay: '0.4s' }})
+                        )
                     )
                 );
             }
 
             if (!currentUser) {
-                return e('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4' },
-                    e('div', { className: 'bg-white rounded-lg shadow-xl p-8 w-full max-w-md' },
+                return e('div', { className: `min-h-screen flex items-center justify-center p-4 ${bg}` },
+                    e(ParallaxBackground),
+                    e(HelpButton, { onClick: () => setShowHelp(true) }),
+                    e(HelpModal, { isOpen: showHelp, onClose: () => setShowHelp(false) }),
+                    e('div', { className: 'glass rounded-3xl shadow-2xl p-10 w-full max-w-md z-10 animate-scaleIn' },
                         e('div', { className: 'text-center mb-8' },
-                            e('div', { className: 'inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4' },
+                            e('div', { className: 'inline-flex items-center justify-center w-20 h-20 gradient-primary rounded-full mb-6 animate-float' },
                                 icons.wrench()
                             ),
-                            e('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Sistema de OS'),
-                            e('p', { className: 'text-gray-600 mt-2' }, 'Gestão de Manutenção Completa')
+                            e('h1', { className: 'text-4xl font-bold mb-2 animate-fadeInDown' },
+                                e('span', { className: 'gradient-primary bg-clip-text text-transparent' }, 'Sistema de OS')
+                            ),
+                            e('p', { className: `${textSecondary} text-lg animate-fadeInUp delay-100` }, 'Gestão de Manutenção')
                         ),
-                        e('div', { className: 'space-y-4' },
-                            e('div', null,
-                                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Usuário'),
+                        e('div', { className: 'space-y-5' },
+                            e('div', { className: 'animate-slideInLeft delay-200' },
+                                e('label', { className: `block text-sm font-semibold ${textSecondary} mb-2` }, 'Usuário'),
                                 e('input', {
                                     type: 'text',
                                     value: loginForm.username,
                                     onChange: (ev) => setLoginForm({ ...loginForm, username: ev.target.value }),
                                     onKeyPress: (ev) => ev.key === 'Enter' && handleLogin(),
-                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
                                     placeholder: 'Digite seu usuário'
                                 })
                             ),
-                            e('div', null,
-                                e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Senha'),
+                            e('div', { className: 'animate-slideInRight delay-300' },
+                                e('label', { className: `block text-sm font-semibold ${textSecondary} mb-2` }, 'Senha'),
                                 e('input', {
                                     type: 'password',
                                     value: loginForm.password,
                                     onChange: (ev) => setLoginForm({ ...loginForm, password: ev.target.value }),
                                     onKeyPress: (ev) => ev.key === 'Enter' && handleLogin(),
-                                    className: 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
                                     placeholder: 'Digite sua senha'
                                 })
                             ),
-                            loginError && e('div', { className: 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2' },
+                            loginError && e('div', { className: 'bg-red-50 border-2 border-red-200 text-red-700 px-5 py-4 rounded-xl flex items-center gap-3 animate-fadeIn' },
                                 icons.alert(),
-                                e('span', null, loginError)
+                                e('span', { className: 'font-medium' }, loginError)
                             ),
                             e('button', {
                                 onClick: handleLogin,
-                                className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors'
-                            }, 'Entrar')
+                                className: 'modern-button w-full text-lg py-4 animate-fadeInUp delay-400'
+                            }, 'Entrar no Sistema')
+                        ),
+                        e('div', { className: 'mt-8 text-center animate-fadeInUp delay-500' },
+                            e('button', {
+                                onClick: () => setShowHelp(true),
+                                className: `${textSecondary} hover:text-indigo-600 transition-colors text-sm font-medium flex items-center gap-2 mx-auto`
+                            },
+                                icons.help(),
+                                'Precisa de ajuda?'
+                            )
                         )
                     )
                 );
             }
-
-            if (currentUser.role === 'user') {
-                return e('div', { className: 'min-h-screen bg-gray-50' },
-                    e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
-                        e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
-                            e('div', { className: 'flex items-center gap-3' },
-                                icons.wrench(),
+            if (isRegularUser) {
+                return e('div', { className: `min-h-screen ${bg}` },
+                    e(HelpButton, { onClick: () => setShowHelp(true) }),
+                    e(HelpModal, { isOpen: showHelp, onClose: () => setShowHelp(false) }),
+                    e('header', { className: 'gradient-primary text-white shadow-2xl animate-fadeInDown' },
+                        e('div', { className: 'max-w-7xl mx-auto px-4 py-6 flex items-center justify-between' },
+                            e('div', { className: 'flex items-center gap-4' },
+                                e('div', { className: 'animate-float' }, icons.wrench()),
                                 e('div', null,
-                                    e('h1', { className: 'text-2xl font-bold' }, 'Sistema de OS'),
-                                    e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
+                                    e('h1', { className: 'text-3xl font-bold' }, 'Sistema de OS'),
+                                    e('p', { className: 'text-sm text-indigo-100 mt-1' }, `Olá, ${currentUser.name} 👋`)
                                 )
                             ),
-                            e('button', {
-                                onClick: () => setCurrentUser(null),
-                                className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
-                            }, icons.logout(), 'Sair')
+                            e('div', { className: 'flex items-center gap-3' },
+                                e('button', {
+                                    onClick: toggleDarkMode,
+                                    className: 'px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all hover-lift',
+                                    title: darkMode ? 'Modo Claro' : 'Modo Escuro'
+                                }, darkMode ? icons.sun() : icons.moon()),
+                                e('button', {
+                                    onClick: () => setCurrentUser(null),
+                                    className: 'flex items-center gap-2 bg-white/20 hover:bg-white/30 px-5 py-2 rounded-xl transition-all hover-lift'
+                                }, icons.logout(), 'Sair')
+                            )
                         )
                     ),
-                    e('main', { className: 'max-w-4xl mx-auto px-4 py-8' },
-                        e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
-                                icons.plus(), 'Nova Ordem de Serviço'
+                    e('main', { className: 'max-w-5xl mx-auto px-4 py-8' },
+                        e('div', { className: `modern-card hover-lift animate-fadeInUp mb-8` },
+                            e('h2', { className: `text-3xl font-bold ${textPrimary} mb-6 flex items-center gap-3` },
+                                e('span', { className: 'gradient-primary bg-clip-text text-transparent' }, '✨ Nova Ordem de Serviço')
                             ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
+                            e('div', { className: 'space-y-5' },
+                                e('div', { className: 'animate-slideInLeft delay-100' },
+                                    e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Título *'),
                                     e('input', {
                                         type: 'text',
                                         value: newOrder.title,
                                         onChange: (ev) => setNewOrder({ ...newOrder, title: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
+                                        className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
                                         placeholder: 'Ex: Ar condicionado com problema'
                                     })
                                 ),
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
+                                e('div', { className: 'animate-slideInRight delay-200' },
+                                    e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Descrição do Problema *'),
                                     e('textarea', {
                                         value: newOrder.description,
                                         onChange: (ev) => setNewOrder({ ...newOrder, description: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
+                                        className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
                                         rows: 4,
-                                        placeholder: 'Descreva o problema...'
+                                        placeholder: 'Descreva detalhadamente o problema...'
                                     })
                                 ),
-                                e('div', { className: 'grid grid-cols-2 gap-4' },
+                                e('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn delay-300' },
                                     e('div', null,
-                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Setor *'),
+                                        e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Setor *'),
                                         e('input', {
                                             type: 'text',
                                             value: newOrder.sector,
                                             onChange: (ev) => setNewOrder({ ...newOrder, sector: ev.target.value }),
-                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg',
-                                            placeholder: 'Ex: Produção'
+                                            className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                            placeholder: 'Ex: Produção, Administrativo'
                                         })
                                     ),
                                     e('div', null,
-                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Prioridade'),
+                                        e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Prioridade'),
                                         e('select', {
                                             value: newOrder.priority,
                                             onChange: (ev) => setNewOrder({ ...newOrder, priority: ev.target.value }),
-                                            className: 'w-full px-4 py-2 border border-gray-300 rounded-lg'
+                                            className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`
                                         },
-                                            e('option', { value: 'baixa' }, 'Baixa'),
-                                            e('option', { value: 'media' }, 'Média'),
-                                            e('option', { value: 'alta' }, 'Alta')
+                                            e('option', { value: 'baixa' }, '🟢 Baixa'),
+                                            e('option', { value: 'media' }, '🟡 Média'),
+                                            e('option', { value: 'alta' }, '🔴 Alta')
                                         )
                                     )
                                 ),
                                 e('button', {
                                     onClick: handleCreateOrder,
-                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
+                                    className: 'modern-button w-full py-4 text-lg flex items-center justify-center gap-3 animate-fadeInUp delay-400'
                                 }, icons.plus(), 'Criar Ordem de Serviço')
                             )
                         ),
-                        e('div', { className: 'mb-6' },
-                            e('h2', { className: 'text-2xl font-bold mb-4' }, 'Minhas Ordens de Serviço')
+                        e('div', { className: 'mb-6 animate-fadeIn delay-500' },
+                            e('h2', { className: `text-3xl font-bold ${textPrimary} mb-2` }, '📋 Minhas Ordens de Serviço'),
+                            e('p', { className: textSecondary }, `Você tem ${displayOrders.length} ordem(ns) de serviço`)
                         ),
-                        e('div', { className: 'space-y-4' },
-                            displayOrders.map(order =>
-                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                        e('div', { className: 'space-y-5' },
+                            displayOrders.map((order, idx) =>
+                                e('div', { 
+                                    key: order.id, 
+                                    className: `modern-card hover-lift animate-fadeInUp ${order.status === 'concluida' ? 'border-2 border-green-400' : ''}`,
+                                    style: { animationDelay: `${0.1 * idx}s`, opacity: 0 }
+                                },
                                     e('div', { className: 'mb-4' },
-                                        e('div', { className: 'flex items-center gap-2 mb-2' },
-                                            e('h3', { className: 'text-xl font-bold' }, order.title),
-                                            e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
+                                        e('div', { className: 'flex items-start justify-between mb-3' },
+                                            e('div', { className: 'flex-1' },
+                                                e('h3', { className: `text-2xl font-bold ${textPrimary} mb-2` }, order.title),
+                                                e('div', { className: 'flex gap-2 mb-3' },
+                                                    e('span', { className: `modern-badge ${priorityColor(order.priority)}` }, 
+                                                        order.priority === 'alta' ? '🔴' : order.priority === 'media' ? '🟡' : '🟢',
+                                                        order.priority.toUpperCase()
+                                                    )
+                                                )
+                                            )
                                         ),
-                                        e('p', { className: 'text-gray-600 mb-3' }, order.description),
-                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 mb-3' },
-                                            e('span', null, `📍 ${order.sector}`),
-                                            e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
+                                        e('p', { className: `${textSecondary} text-lg mb-4 leading-relaxed` }, order.description),
+                                        e('div', { className: `flex gap-6 text-sm ${textSecondary} mb-4 flex-wrap` },
+                                            e('span', { className: 'flex items-center gap-2' }, '📍', order.sector),
+                                            e('span', { className: 'flex items-center gap-2' }, '🕒', new Date(order.created_at).toLocaleString('pt-BR'))
                                         ),
-                                        e('div', { className: 'flex items-center gap-2' },
-                                            e('span', { className: `px-3 py-1 rounded text-sm font-medium ${
-                                                order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
-                                                order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-green-100 text-green-800'
-                                            }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
+                                        e('div', { className: 'mb-4' },
+                                            e('span', { 
+                                                className: `modern-badge ${
+                                                    order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                                                    order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-green-100 text-green-800'
+                                                } text-base px-5 py-2`
+                                            }, 
+                                                order.status === 'pendente' ? '⏳ Pendente' : 
+                                                order.status === 'em_andamento' ? '🔧 Em Andamento' : 
+                                                '✅ Concluída'
+                                            )
                                         ),
-                                        order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200' },
-                                            e('div', { className: 'flex items-start gap-2' },
-                                                icons.message(),
-                                                e('div', null,
-                                                    e('p', { className: 'text-sm font-semibold text-blue-800' }, 'Mensagem da Manutenção:'),
-                                                    e('p', { className: 'text-sm text-blue-700' }, order.message)
+                                        order.message && e('div', { className: `mt-4 p-5 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-xl border-2 border-blue-200 animate-scaleIn` },
+                                            e('div', { className: 'flex items-start gap-3' },
+                                                e('div', { className: 'mt-1' }, icons.message()),
+                                                e('div', { className: 'flex-1' },
+                                                    e('p', { className: 'text-sm font-bold text-blue-800 mb-2' }, '💬 Mensagem da Manutenção:'),
+                                                    e('p', { className: 'text-blue-700 leading-relaxed' }, order.message)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center' },
-                                e('p', { className: 'text-gray-500' }, 'Nenhuma OS encontrada')
+                            displayOrders.length === 0 && e('div', { className: 'modern-card text-center py-16 animate-fadeIn' },
+                                e('div', { className: 'text-6xl mb-4 animate-float' }, '📭'),
+                                e('p', { className: `text-xl ${textSecondary} font-medium` }, 'Nenhuma ordem de serviço encontrada'),
+                                e('p', { className: `text-sm ${textSecondary} mt-2` }, 'Crie uma nova OS acima para começar')
                             )
                         )
                     )
                 );
             }
-			// Interface para Manutenção e Dono
-            const canEdit = currentUser.role === 'maintenance';
-            const showAllFeatures = currentUser.role === 'maintenance' || currentUser.role === 'owner';
-
-            return e('div', { className: 'min-h-screen bg-gray-50' },
-                e('header', { className: 'bg-indigo-600 text-white shadow-lg' },
-                    e('div', { className: 'max-w-7xl mx-auto px-4 py-4 flex items-center justify-between' },
-                        e('div', { className: 'flex items-center gap-3' },
-                            icons.wrench(),
+            return e('div', { className: `min-h-screen ${bg}` },
+                e(HelpButton, { onClick: () => setShowHelp(true) }),
+                e(HelpModal, { isOpen: showHelp, onClose: () => setShowHelp(false) }),
+                e('header', { className: 'gradient-primary text-white shadow-2xl animate-fadeInDown' },
+                    e('div', { className: 'max-w-7xl mx-auto px-4 py-6 flex items-center justify-between' },
+                        e('div', { className: 'flex items-center gap-4' },
+                            e('div', { className: 'animate-float' }, icons.wrench()),
                             e('div', null,
-                                e('h1', { className: 'text-2xl font-bold' }, currentUser.role === 'owner' ? 'Painel do Dono' : 'Sistema de Manutenção'),
-                                e('p', { className: 'text-sm text-indigo-200' }, `Olá, ${currentUser.name}`)
+                                e('h1', { className: 'text-3xl font-bold' }, isOwner ? '👑 Painel do Dono' : '🔧 Sistema de Manutenção'),
+                                e('p', { className: 'text-sm text-indigo-100 mt-1' }, `Olá, ${currentUser.name} 👋`)
                             )
                         ),
-                        e('button', {
-                            onClick: () => setCurrentUser(null),
-                            className: 'flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2 rounded-lg'
-                        }, icons.logout(), 'Sair')
+                        e('div', { className: 'flex items-center gap-3' },
+                            e('button', {
+                                onClick: toggleDarkMode,
+                                className: 'px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all hover-lift',
+                                title: darkMode ? 'Modo Claro' : 'Modo Escuro'
+                            }, darkMode ? icons.sun() : icons.moon()),
+                            e('button', {
+                                onClick: () => setCurrentUser(null),
+                                className: 'flex items-center gap-2 bg-white/20 hover:bg-white/30 px-5 py-2 rounded-xl transition-all hover-lift'
+                            }, icons.logout(), 'Sair')
+                        )
                     )
                 ),
-                e('div', { className: 'max-w-7xl mx-auto px-4 py-6' },
-                    e('div', { className: 'flex gap-3 mb-6 overflow-x-auto pb-2' },
+                e('div', { className: 'max-w-7xl mx-auto px-4 py-8' },
+                    e('div', { className: 'flex gap-3 mb-8 overflow-x-auto pb-2 animate-fadeIn' },
                         e('button', {
                             onClick: () => setCurrentTab('orders'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'orders' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                            className: `px-6 py-4 rounded-xl font-bold whitespace-nowrap flex items-center gap-3 transition-all hover-lift ${
+                                currentTab === 'orders' ? 'gradient-primary text-white shadow-xl' : `${cardBg} ${textPrimary} hover:shadow-lg`
+                            }`
                         }, icons.clipboard(), 'Ordens de Serviço'),
-                        showAllFeatures && e('button', {
+                        e('button', {
                             onClick: () => setCurrentTab('preventive-schedule'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-schedule' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
-                        }, icons.calendar(), 'Preventivas Programadas', overduePreventives.length > 0 && e('span', { className: 'bg-red-500 text-white text-xs px-2 py-1 rounded-full' }, overduePreventives.length)),
-                        showAllFeatures && e('button', {
+                            className: `px-6 py-4 rounded-xl font-bold whitespace-nowrap flex items-center gap-3 transition-all hover-lift ${
+                                currentTab === 'preventive-schedule' ? 'gradient-primary text-white shadow-xl' : `${cardBg} ${textPrimary} hover:shadow-lg`
+                            }`
+                        }, 
+                            icons.calendar(), 
+                            'Preventivas',
+                            overduePreventives.length > 0 && e('span', { className: 'bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse' }, overduePreventives.length)
+                        ),
+                        e('button', {
                             onClick: () => setCurrentTab('preventive-records'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'preventive-records' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
-                        }, icons.clipboard(), 'Registros de Preventivas'),
-                        showAllFeatures && e('button', {
+                            className: `px-6 py-4 rounded-xl font-bold whitespace-nowrap flex items-center gap-3 transition-all hover-lift ${
+                                currentTab === 'preventive-records' ? 'gradient-primary text-white shadow-xl' : `${cardBg} ${textPrimary} hover:shadow-lg`
+                            }`
+                        }, icons.clipboard(), 'Registros'),
+                        e('button', {
                             onClick: () => setCurrentTab('stats'),
-                            className: `px-6 py-3 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 ${currentTab === 'stats' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                            className: `px-6 py-4 rounded-xl font-bold whitespace-nowrap flex items-center gap-3 transition-all hover-lift ${
+                                currentTab === 'stats' ? 'gradient-primary text-white shadow-xl' : `${cardBg} ${textPrimary} hover:shadow-lg`
+                            }`
                         }, icons.chart(), 'Estatísticas')
                     ),
 
                     currentTab === 'orders' && e('div', null,
-                        e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4' },
+                        isOwner && e('div', { className: `modern-card hover-lift animate-fadeInUp mb-8` },
+                            e('h2', { className: `text-3xl font-bold ${textPrimary} mb-6 flex items-center gap-3` },
+                                e('span', { className: 'gradient-primary bg-clip-text text-transparent' }, '✨ Nova Ordem de Serviço')
+                            ),
+                            e('div', { className: 'space-y-5' },
+                                e('div', { className: 'animate-slideInLeft delay-100' },
+                                    e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Título *'),
+                                    e('input', {
+                                        type: 'text',
+                                        value: newOrder.title,
+                                        onChange: (ev) => setNewOrder({ ...newOrder, title: ev.target.value }),
+                                        className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        placeholder: 'Ex: Ar condicionado com problema'
+                                    })
+                                ),
+                                e('div', { className: 'animate-slideInRight delay-200' },
+                                    e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Descrição *'),
+                                    e('textarea', {
+                                        value: newOrder.description,
+                                        onChange: (ev) => setNewOrder({ ...newOrder, description: ev.target.value }),
+                                        className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        rows: 4,
+                                        placeholder: 'Descreva o problema...'
+                                    })
+                                ),
+                                e('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn delay-300' },
+                                    e('div', null,
+                                        e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Setor *'),
+                                        e('input', {
+                                            type: 'text',
+                                            value: newOrder.sector,
+                                            onChange: (ev) => setNewOrder({ ...newOrder, sector: ev.target.value }),
+                                            className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                            placeholder: 'Ex: Produção'
+                                        })
+                                    ),
+                                    e('div', null,
+                                        e('label', { className: `block text-sm font-bold ${textSecondary} mb-2` }, 'Prioridade'),
+                                        e('select', {
+                                            value: newOrder.priority,
+                                            onChange: (ev) => setNewOrder({ ...newOrder, priority: ev.target.value }),
+                                            className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                        },
+                                            e('option', { value: 'baixa' }, '🟢 Baixa'),
+                                            e('option', { value: 'media' }, '🟡 Média'),
+                                            e('option', { value: 'alta' }, '🔴 Alta')
+                                        )
+                                    )
+                                ),
+                                e('button', {
+                                    onClick: handleCreateOrder,
+                                    className: 'modern-button w-full py-4 text-lg flex items-center justify-center gap-3 animate-fadeInUp delay-400'
+                                }, icons.plus(), 'Criar Ordem de Serviço')
+                            )
+                        ),
+                        e('div', { className: 'mb-6 flex items-center justify-between flex-wrap gap-4 animate-fadeIn' },
                             e('div', { className: 'flex gap-3' },
                                 e('button', {
                                     onClick: () => setShowHistory(false),
-                                    className: `px-6 py-2 rounded-lg font-semibold ${!showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
-                                }, `Ativas (${activeOrders.length})`),
+                                    className: `px-6 py-3 rounded-xl font-bold transition-all hover-lift ${
+                                        !showHistory ? 'gradient-success text-white shadow-lg' : `${cardBg} ${textPrimary} hover:shadow-md`
+                                    }`
+                                }, `🔥 Ativas (${activeOrders.length})`),
                                 e('button', {
                                     onClick: () => setShowHistory(true),
-                                    className: `px-6 py-2 rounded-lg font-semibold flex items-center gap-2 ${showHistory ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 shadow'}`
+                                    className: `px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover-lift ${
+                                        showHistory ? 'gradient-info text-white shadow-lg' : `${cardBg} ${textPrimary} hover:shadow-md`
+                                    }`
                                 }, icons.history(), `Histórico (${completedOrders.length})`)
                             ),
                             e('div', { className: 'relative' },
-                                e('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
+                                e('div', { className: 'absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400' }, icons.search()),
                                 e('input', {
                                     type: 'text',
                                     value: searchTerm,
                                     onChange: (ev) => setSearchTerm(ev.target.value),
                                     placeholder: 'Buscar OS...',
-                                    className: 'pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow'
+                                    className: `modern-input pl-12 ${darkMode ? 'bg-gray-700 text-white' : ''}`
                                 })
                             )
                         ),
-                        e('div', { className: 'space-y-4' },
-                            displayOrders.map(order =>
-                                e('div', { key: order.id, className: `bg-white rounded-lg shadow-md p-6 slide-in ${order.status === 'concluida' ? 'border-2 border-green-500' : ''}` },
+                        e('div', { className: 'grid gap-6' },
+                            displayOrders.map((order, idx) =>
+                                e('div', { 
+                                    key: order.id, 
+                                    className: `modern-card hover-lift animate-fadeInUp ${order.status === 'concluida' ? 'border-2 border-green-400' : ''}`,
+                                    style: { animationDelay: `${0.1 * idx}s`, opacity: 0 }
+                                },
                                     e('div', { className: 'mb-4' },
-                                        e('div', { className: 'flex items-center justify-between mb-2' },
-                                            e('div', { className: 'flex items-center gap-2' },
-                                                e('h3', { className: 'text-xl font-bold' }, order.title),
-                                                e('span', { className: `px-3 py-1 rounded-full text-xs font-semibold ${priorityColor(order.priority)}` }, order.priority.toUpperCase())
+                                        e('div', { className: 'flex items-start justify-between mb-3' },
+                                            e('div', { className: 'flex-1' },
+                                                e('h3', { className: `text-2xl font-bold ${textPrimary} mb-3` }, order.title),
+                                                e('div', { className: 'flex gap-2 mb-3 flex-wrap' },
+                                                    e('span', { className: `modern-badge ${priorityColor(order.priority)}` }, 
+                                                        order.priority === 'alta' ? '🔴' : order.priority === 'media' ? '🟡' : '🟢',
+                                                        order.priority.toUpperCase()
+                                                    )
+                                                )
                                             ),
-                                            currentUser.role === 'owner' && e('span', { className: 'flex items-center gap-1 text-sm text-gray-500' }, icons.eye(), 'Visualização')
+                                            isOwner && e('div', { className: 'flex items-center gap-2 modern-badge bg-purple-100 text-purple-800' }, 
+                                                icons.eye(), 'Visualização'
+                                            )
                                         ),
-                                        e('p', { className: 'text-gray-600 mb-3' }, order.description),
-                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 flex-wrap' },
-                                            e('span', null, `📍 ${order.sector}`),
-                                            e('span', null, `👤 ${order.created_by_name}`),
-                                            e('span', null, `🕒 ${new Date(order.created_at).toLocaleString('pt-BR')}`)
+                                        e('p', { className: `${textSecondary} text-lg mb-4 leading-relaxed` }, order.description),
+                                        e('div', { className: `flex gap-6 text-sm ${textSecondary} mb-4 flex-wrap` },
+                                            e('span', { className: 'flex items-center gap-2' }, '📍', order.sector),
+                                            e('span', { className: 'flex items-center gap-2' }, '👤', order.created_by_name),
+                                            e('span', { className: 'flex items-center gap-2' }, '🕒', new Date(order.created_at).toLocaleString('pt-BR'))
                                         )
                                     ),
-                                    canEdit && !showHistory && e('div', { className: 'flex justify-between items-center pt-4 border-t mb-4' },
-                                        e('div', { className: 'flex gap-2 flex-wrap' },
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'pendente'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'pendente' ? 'bg-yellow-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '⏳ Pendente'),
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'em_andamento'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '🔧 Em Andamento'),
-                                            e('button', {
-                                                onClick: () => handleStatusChange(order.id, 'concluida'),
-                                                className: `px-3 py-2 rounded text-sm font-medium ${order.status === 'concluida' ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`
-                                            }, '✅ Concluída')
-                                        )
+                                    isMaintenance && !showHistory && e('div', { className: 'flex gap-3 pt-4 border-t mb-4 flex-wrap' },
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'pendente'),
+                                            className: `px-5 py-3 rounded-xl text-sm font-bold transition-all hover-lift ${
+                                                order.status === 'pendente' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200'
+                                            }`
+                                        }, '⏳ Pendente'),
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'em_andamento'),
+                                            className: `px-5 py-3 rounded-xl text-sm font-bold transition-all hover-lift ${
+                                                order.status === 'em_andamento' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200'
+                                            }`
+                                        }, '🔧 Em Andamento'),
+                                        e('button', {
+                                            onClick: () => handleStatusChange(order.id, 'concluida'),
+                                            className: `px-5 py-3 rounded-xl text-sm font-bold transition-all hover-lift ${
+                                                order.status === 'concluida' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-100 hover:bg-gray-200'
+                                            }`
+                                        }, '✅ Concluída')
                                     ),
-                                    !canEdit && e('div', { className: 'pt-4 border-t mb-4' },
-                                        e('span', { className: `px-4 py-2 rounded text-sm font-medium inline-block ${
+                                    isOwner && e('div', { className: 'pt-4 border-t mb-4' },
+                                        e('span', { className: `modern-badge text-base px-5 py-2 ${
                                             order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
                                             order.status === 'em_andamento' ? 'bg-blue-100 text-blue-800' :
                                             'bg-green-100 text-green-800'
-                                        }` }, order.status === 'pendente' ? '⏳ Pendente' : order.status === 'em_andamento' ? '🔧 Em Andamento' : '✅ Concluída')
+                                        }` }, 
+                                            order.status === 'pendente' ? '⏳ Pendente' : 
+                                            order.status === 'em_andamento' ? '🔧 Em Andamento' : 
+                                            '✅ Concluída'
+                                        )
                                     ),
-                                    canEdit && editingMessage === order.id ? e('div', { className: 'mt-3' },
+                                    isMaintenance && editingMessage === order.id ? e('div', { className: 'mt-4 animate-scaleIn' },
                                         e('textarea', {
                                             value: messageText,
                                             onChange: (ev) => setMessageText(ev.target.value),
-                                            className: 'w-full px-3 py-2 border rounded-lg mb-2',
+                                            className: `modern-input w-full mb-3 ${darkMode ? 'bg-gray-700 text-white' : ''}`,
                                             rows: 3,
-                                            placeholder: 'Ex: Já vamos aí dar uma olhada!'
+                                            placeholder: 'Digite sua mensagem... Ex: Já vamos aí dar uma olhada!'
                                         }),
-                                        e('div', { className: 'flex gap-2' },
+                                        e('div', { className: 'flex gap-3' },
                                             e('button', {
                                                 onClick: () => handleSaveMessage(order.id),
-                                                className: 'px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700'
-                                            }, 'Enviar'),
+                                                className: 'modern-button flex-1'
+                                            }, '📤 Enviar'),
                                             e('button', {
                                                 onClick: () => { setEditingMessage(null); setMessageText(''); },
-                                                className: 'px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'
+                                                className: 'px-5 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold transition-all'
                                             }, 'Cancelar')
                                         )
                                     ) : e('div', null,
-                                        order.message && e('div', { className: 'mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 mb-2' },
-                                            e('p', { className: 'text-sm font-semibold text-blue-800 mb-1' }, 'Mensagem enviada:'),
-                                            e('p', { className: 'text-sm text-blue-700' }, order.message)
+                                        order.message && e('div', { className: `mt-4 p-5 ${darkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-xl border-2 border-blue-200` },
+                                            e('p', { className: 'text-sm font-bold text-blue-800 mb-2' }, '💬 Mensagem enviada:'),
+                                            e('p', { className: 'text-blue-700 leading-relaxed' }, order.message)
                                         ),
-                                        canEdit && !showHistory && e('button', {
+                                        isMaintenance && !showHistory && e('button', {
                                             onClick: () => { setEditingMessage(order.id); setMessageText(order.message || ''); },
-                                            className: 'mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-2'
+                                            className: 'mt-3 px-5 py-3 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 flex items-center gap-2 font-bold transition-all hover-lift'
                                         }, icons.message(), order.message ? 'Editar mensagem' : 'Enviar mensagem')
                                     )
                                 )
                             ),
-                            displayOrders.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
-                                e('p', { className: 'text-gray-500 text-lg' }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa')
+                            displayOrders.length === 0 && e('div', { className: 'modern-card text-center py-16 animate-fadeIn' },
+                                e('div', { className: 'text-6xl mb-4 animate-float' }, '📭'),
+                                e('p', { className: `text-xl ${textSecondary} font-medium` }, showHistory ? 'Nenhuma OS concluída' : 'Nenhuma OS ativa'),
+                                e('p', { className: `text-sm ${textSecondary} mt-2` }, 'Aguardando novas ordens de serviço')
                             )
                         )
                     ),
-
-                    currentTab === 'preventive-schedule' && showAllFeatures && e('div', null,
-                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
-                                icons.calendar(), 'Agendar Nova Preventiva'
+                    currentTab === 'preventive-schedule' && e('div', null,
+                        isMaintenance && e('div', { className: `modern-card hover-lift animate-fadeInUp mb-8` },
+                            e('h2', { className: `text-3xl font-bold ${textPrimary} mb-6 flex items-center gap-3` },
+                                e('span', { className: 'gradient-primary bg-clip-text text-transparent' }, '📅 Agendar Preventiva')
                             ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
+                            e('div', { className: 'space-y-5' },
+                                e('input', {
+                                    type: 'text',
+                                    value: newPreventive.title,
+                                    onChange: (ev) => setNewPreventive({ ...newPreventive, title: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    placeholder: 'Título da preventiva *'
+                                }),
+                                e('textarea', {
+                                    value: newPreventive.description,
+                                    onChange: (ev) => setNewPreventive({ ...newPreventive, description: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    rows: 3,
+                                    placeholder: 'Descrição *'
+                                }),
+                                e('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
                                     e('input', {
                                         type: 'text',
-                                        value: newPreventive.title,
-                                        onChange: (ev) => setNewPreventive({ ...newPreventive, title: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Descrição *'),
-                                    e('textarea', {
-                                        value: newPreventive.description,
-                                        onChange: (ev) => setNewPreventive({ ...newPreventive, description: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        rows: 3,
-                                        placeholder: 'Descreva a manutenção preventiva...'
-                                    })
-                                ),
-                                e('div', { className: 'grid grid-cols-3 gap-4' },
-                                    e('div', null,
-                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
-                                        e('input', {
-                                            type: 'text',
-                                            value: newPreventive.location,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, location: ev.target.value }),
-                                            className: 'w-full px-4 py-2 border rounded-lg',
-                                            placeholder: 'Ex: Aviários 1,2,3,4'
-                                        })
+                                        value: newPreventive.location,
+                                        onChange: (ev) => setNewPreventive({ ...newPreventive, location: ev.target.value }),
+                                        className: `modern-input ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                        placeholder: 'Local *'
+                                    }),
+                                    e('select', {
+                                        value: newPreventive.frequency,
+                                        onChange: (ev) => setNewPreventive({ ...newPreventive, frequency: ev.target.value }),
+                                        className: `modern-input ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                    },
+                                        e('option', { value: 'diario' }, 'Diário'),
+                                        e('option', { value: 'semanal' }, 'Semanal'),
+                                        e('option', { value: 'mensal' }, 'Mensal'),
+                                        e('option', { value: 'trimestral' }, 'Trimestral'),
+                                        e('option', { value: 'semestral' }, 'Semestral'),
+                                        e('option', { value: 'anual' }, 'Anual')
                                     ),
-                                    e('div', null,
-                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Frequência'),
-                                        e('select', {
-                                            value: newPreventive.frequency,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, frequency: ev.target.value }),
-                                            className: 'w-full px-4 py-2 border rounded-lg'
-                                        },
-                                            e('option', { value: 'diario' }, 'Diário'),
-                                            e('option', { value: 'semanal' }, 'Semanal'),
-                                            e('option', { value: 'mensal' }, 'Mensal'),
-                                            e('option', { value: 'trimestral' }, 'Trimestral'),
-                                            e('option', { value: 'semestral' }, 'Semestral'),
-                                            e('option', { value: 'anual' }, 'Anual')
-                                        )
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Próxima Data *'),
-                                        e('input', {
-                                            type: 'date',
-                                            value: newPreventive.next_date,
-                                            onChange: (ev) => setNewPreventive({ ...newPreventive, next_date: ev.target.value }),
-                                            className: 'w-full px-4 py-2 border rounded-lg'
-                                        })
-                                    )
+                                    e('input', {
+                                        type: 'date',
+                                        value: newPreventive.next_date,
+                                        onChange: (ev) => setNewPreventive({ ...newPreventive, next_date: ev.target.value }),
+                                        className: `modern-input ${darkMode ? 'bg-gray-700 text-white' : ''}`
+                                    })
                                 ),
                                 e('button', {
                                     onClick: handleCreatePreventive,
-                                    className: 'w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2'
+                                    className: 'modern-button w-full py-4 text-lg flex items-center justify-center gap-3'
                                 }, icons.plus(), 'Agendar Preventiva')
                             )
                         ),
-                        overduePreventives.length > 0 && e('div', { className: 'bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6' },
-                            e('div', { className: 'flex items-center gap-2 mb-2' },
-                                icons.bell(),
-                                e('h3', { className: 'font-bold text-red-800' }, `⚠️ ${overduePreventives.length} Preventiva(s) Atrasada(s)!`)
+                        overduePreventives.length > 0 && e('div', { className: 'bg-red-50 border-2 border-red-300 rounded-xl p-6 mb-6 animate-fadeIn' },
+                            e('div', { className: 'flex items-center gap-3' },
+                                e('div', { className: 'text-2xl animate-bounce' }, '⚠️'),
+                                e('h3', { className: 'font-bold text-red-800 text-xl' }, `${overduePreventives.length} Preventiva(s) Atrasada(s)!`)
                             )
                         ),
-                        e('div', { className: 'space-y-4' },
-                            preventiveSchedule.map(prev => {
+                        e('div', { className: 'grid gap-6' },
+                            preventiveSchedule.map((prev, idx) => {
                                 const isOverdue = new Date(prev.next_date) < new Date();
-                                return e('div', { key: prev.id, className: `bg-white rounded-lg shadow-md p-6 ${isOverdue ? 'border-2 border-red-400' : ''}` },
-                                    e('div', { className: 'flex justify-between items-start mb-3' },
+                                return e('div', { 
+                                    key: prev.id, 
+                                    className: `modern-card hover-lift animate-fadeInUp ${isOverdue ? 'border-2 border-red-400' : ''}`,
+                                    style: { animationDelay: `${0.1 * idx}s`, opacity: 0 }
+                                },
+                                    e('div', { className: 'flex justify-between items-start' },
                                         e('div', { className: 'flex-1' },
-                                            e('div', { className: 'flex items-center gap-2 mb-2' },
-                                                e('h3', { className: 'text-xl font-bold' }, prev.title),
-                                                isOverdue && e('span', { className: 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold' }, 'ATRASADA')
+                                            e('div', { className: 'flex items-center gap-3 mb-3' },
+                                                e('h3', { className: `text-2xl font-bold ${textPrimary}` }, prev.title),
+                                                isOverdue && e('span', { className: 'modern-badge bg-red-100 text-red-800 animate-pulse' }, '🚨 ATRASADA')
                                             ),
-                                            e('p', { className: 'text-gray-600 mb-2' }, prev.description),
-                                            e('div', { className: 'flex gap-4 text-sm text-gray-500' },
-                                                e('span', null, `📍 ${prev.location}`),
-                                                e('span', null, `🔄 ${frequencyLabel(prev.frequency)}`),
-                                                e('span', { className: isOverdue ? 'text-red-600 font-semibold' : '' }, `📅 ${new Date(prev.next_date).toLocaleDateString('pt-BR')}`)
+                                            e('p', { className: `${textSecondary} mb-3` }, prev.description),
+                                            e('div', { className: `flex gap-6 text-sm ${textSecondary} flex-wrap` },
+                                                e('span', { className: 'flex items-center gap-2' }, '📍', prev.location),
+                                                e('span', { className: 'flex items-center gap-2' }, '🔄', frequencyLabel(prev.frequency)),
+                                                e('span', { className: `flex items-center gap-2 ${isOverdue ? 'text-red-600 font-bold' : ''}` }, 
+                                                    '📅', new Date(prev.next_date).toLocaleDateString('pt-BR')
+                                                )
                                             )
                                         ),
-                                        canEdit && e('button', {
+                                        isMaintenance && e('button', {
                                             onClick: () => handleDeletePreventive(prev.id),
-                                            className: 'px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200'
-                                        }, '🗑️ Excluir')
+                                            className: 'px-4 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 font-bold transition-all hover-lift'
+                                        }, '🗑️')
                                     )
                                 );
                             }),
-                            preventiveSchedule.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
-                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhuma preventiva agendada')
+                            preventiveSchedule.length === 0 && e('div', { className: 'modern-card text-center py-16 animate-fadeIn' },
+                                e('div', { className: 'text-6xl mb-4 animate-float' }, '📅'),
+                                e('p', { className: `text-xl ${textSecondary} font-medium` }, 'Nenhuma preventiva agendada')
                             )
                         )
                     ),
 
-                    currentTab === 'preventive-records' && showAllFeatures && e('div', null,
-                        canEdit && e('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                            e('h2', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2' },
-                                icons.clipboard(), 'Registrar Preventiva Executada'
+                    currentTab === 'preventive-records' && e('div', null,
+                        isMaintenance && e('div', { className: `modern-card hover-lift animate-fadeInUp mb-8` },
+                            e('h2', { className: `text-3xl font-bold ${textPrimary} mb-6 flex items-center gap-3` },
+                                e('span', { className: 'gradient-success bg-clip-text text-transparent' }, '✅ Registrar Preventiva')
                             ),
-                            e('div', { className: 'space-y-4' },
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Título *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newRecord.title,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, title: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        placeholder: 'Ex: Lubrificação Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Local *'),
-                                    e('input', {
-                                        type: 'text',
-                                        value: newRecord.location,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, location: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        placeholder: 'Ex: Aviários 1,2,3,4'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Detalhes do Serviço *'),
-                                    e('textarea', {
-                                        value: newRecord.details,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, details: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        rows: 4,
-                                        placeholder: 'Descreva tudo que foi feito: correntes lubrificadas, rolamentos verificados, etc...'
-                                    })
-                                ),
-                                e('div', null,
-                                    e('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Materiais Utilizados (opcional)'),
-                                    e('textarea', {
-                                        value: newRecord.materials,
-                                        onChange: (ev) => setNewRecord({ ...newRecord, materials: ev.target.value }),
-                                        className: 'w-full px-4 py-2 border rounded-lg',
-                                        rows: 3,
-                                        placeholder: 'Ex: 2L óleo lubrificante, 3 lâmpadas LED 20W, graxa industrial...'
-                                    })
-                                ),
+                            e('div', { className: 'space-y-5' },
+                                e('input', {
+                                    type: 'text',
+                                    value: newRecord.title,
+                                    onChange: (ev) => setNewRecord({ ...newRecord, title: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    placeholder: 'Título *'
+                                }),
+                                e('input', {
+                                    type: 'text',
+                                    value: newRecord.location,
+                                    onChange: (ev) => setNewRecord({ ...newRecord, location: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    placeholder: 'Local *'
+                                }),
+                                e('textarea', {
+                                    value: newRecord.details,
+                                    onChange: (ev) => setNewRecord({ ...newRecord, details: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    rows: 4,
+                                    placeholder: 'Detalhes do serviço executado *'
+                                }),
+                                e('textarea', {
+                                    value: newRecord.materials,
+                                    onChange: (ev) => setNewRecord({ ...newRecord, materials: ev.target.value }),
+                                    className: `modern-input w-full ${darkMode ? 'bg-gray-700 text-white' : ''}`,
+                                    rows: 3,
+                                    placeholder: 'Materiais utilizados (opcional)'
+                                }),
                                 e('button', {
                                     onClick: handleCreateRecord,
-                                    className: 'w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 flex items-center justify-center gap-2'
+                                    className: 'gradient-success text-white w-full py-4 text-lg rounded-xl font-bold flex items-center justify-center gap-3 hover-lift'
                                 }, icons.check(), 'Salvar Registro')
                             )
                         ),
-                        e('div', { className: 'space-y-4' },
-                            preventiveRecords.map(record =>
-                                e('div', { key: record.id, className: 'bg-white rounded-lg shadow-md p-6' },
-                                    e('div', { className: 'mb-4' },
-                                        e('div', { className: 'flex items-center justify-between mb-2' },
-                                            e('h3', { className: 'text-xl font-bold' }, record.title),
-                                            e('span', { className: 'px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold' }, '✅ CONCLUÍDA')
-                                        ),
-                                        e('div', { className: 'flex gap-4 text-sm text-gray-500 mb-3' },
-                                            e('span', null, `📍 ${record.location}`),
-                                            e('span', null, `👤 ${record.executed_by}`),
-                                            e('span', null, `🕒 ${new Date(record.executed_date).toLocaleString('pt-BR')}`)
-                                        ),
-                                        e('div', { className: 'bg-gray-50 rounded-lg p-4 mb-3' },
-                                            e('p', { className: 'font-semibold text-gray-700 mb-2' }, '📋 Detalhes do Serviço:'),
-                                            e('p', { className: 'text-gray-600 whitespace-pre-wrap' }, record.details)
-                                        ),
-                                        record.materials && e('div', { className: 'bg-blue-50 rounded-lg p-4' },
-                                            e('p', { className: 'font-semibold text-blue-700 mb-2' }, '🔧 Materiais Utilizados:'),
-                                            e('p', { className: 'text-blue-600 whitespace-pre-wrap' }, record.materials)
-                                        )
+                        e('div', { className: 'grid gap-6' },
+                            preventiveRecords.map((record, idx) =>
+                                e('div', { 
+                                    key: record.id, 
+                                    className: 'modern-card hover-lift animate-fadeInUp',
+                                    style: { animationDelay: `${0.1 * idx}s`, opacity: 0 }
+                                },
+                                    e('div', { className: 'flex items-center justify-between mb-4' },
+                                        e('h3', { className: `text-2xl font-bold ${textPrimary}` }, record.title),
+                                        e('span', { className: 'modern-badge bg-green-100 text-green-800' }, '✅ Concluída')
+                                    ),
+                                    e('div', { className: `flex gap-6 text-sm ${textSecondary} mb-4 flex-wrap` },
+                                        e('span', { className: 'flex items-center gap-2' }, '📍', record.location),
+                                        e('span', { className: 'flex items-center gap-2' }, '👤', record.executed_by),
+                                        e('span', { className: 'flex items-center gap-2' }, '🕒', new Date(record.executed_date).toLocaleString('pt-BR'))
+                                    ),
+                                    e('div', { className: `${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-5 mb-3` },
+                                        e('p', { className: `font-bold ${textPrimary} mb-2` }, '📋 Detalhes:'),
+                                        e('p', { className: `${textSecondary} whitespace-pre-wrap leading-relaxed` }, record.details)
+                                    ),
+                                    record.materials && e('div', { className: `${darkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-xl p-5` },
+                                        e('p', { className: `font-bold ${darkMode ? 'text-blue-300' : 'text-blue-700'} mb-2` }, '🔧 Materiais:'),
+                                        e('p', { className: `${darkMode ? 'text-blue-200' : 'text-blue-600'} whitespace-pre-wrap` }, record.materials)
                                     )
                                 )
                             ),
-                            preventiveRecords.length === 0 && e('div', { className: 'bg-white rounded-lg p-12 text-center shadow' },
-                                e('p', { className: 'text-gray-500 text-lg' }, 'Nenhum registro de preventiva')
+                            preventiveRecords.length === 0 && e('div', { className: 'modern-card text-center py-16 animate-fadeIn' },
+                                e('div', { className: 'text-6xl mb-4 animate-float' }, '📝'),
+                                e('p', { className: `text-xl ${textSecondary} font-medium` }, 'Nenhum registro de preventiva')
                             )
                         )
                     ),
 
-                    currentTab === 'stats' && showAllFeatures && e('div', null,
-                        e('h2', { className: 'text-2xl font-bold mb-6' }, '📊 Estatísticas Gerais'),
-                        e('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6 mb-6' },
-                            e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                    currentTab === 'stats' && e('div', { className: 'animate-fadeIn' },
+                        e('h2', { className: `text-3xl font-bold ${textPrimary} mb-8` }, '📊 Estatísticas Gerais'),
+                        e('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6 mb-8' },
+                            e('div', { className: `modern-card hover-lift gradient-primary text-white animate-fadeInUp` },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: 'text-gray-500 text-sm' }, 'Total de OS'),
-                                        e('p', { className: 'text-3xl font-bold text-gray-800' }, stats.total)
+                                        e('p', { className: 'text-sm opacity-90 mb-2' }, 'Total de OS'),
+                                        e('p', { className: 'text-4xl font-bold' }, stats.total)
                                     ),
-                                    icons.clipboard()
+                                    e('div', { className: 'text-3xl' }, '📋')
                                 )
                             ),
-                            e('div', { className: 'bg-yellow-50 rounded-lg shadow-md p-6' },
+                            e('div', { className: `modern-card hover-lift bg-yellow-400 text-white animate-fadeInUp delay-100` },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: 'text-yellow-700 text-sm' }, 'Pendentes'),
-                                        e('p', { className: 'text-3xl font-bold text-yellow-800' }, stats.pendente)
+                                        e('p', { className: 'text-sm opacity-90 mb-2' }, 'Pendentes'),
+                                        e('p', { className: 'text-4xl font-bold' }, stats.pendente)
                                     ),
-                                    icons.clock()
+                                    e('div', { className: 'text-3xl' }, '⏳')
                                 )
                             ),
-                            e('div', { className: 'bg-blue-50 rounded-lg shadow-md p-6' },
+                            e('div', { className: `modern-card hover-lift bg-blue-500 text-white animate-fadeInUp delay-200` },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: 'text-blue-700 text-sm' }, 'Em Andamento'),
-                                        e('p', { className: 'text-3xl font-bold text-blue-800' }, stats.em_andamento)
+                                        e('p', { className: 'text-sm opacity-90 mb-2' }, 'Em Andamento'),
+                                        e('p', { className: 'text-4xl font-bold' }, stats.em_andamento)
                                     ),
-                                    icons.wrench()
+                                    e('div', { className: 'text-3xl' }, '🔧')
                                 )
                             ),
-                            e('div', { className: 'bg-green-50 rounded-lg shadow-md p-6' },
+                            e('div', { className: `modern-card hover-lift bg-green-500 text-white animate-fadeInUp delay-300` },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: 'text-green-700 text-sm' }, 'Concluídas'),
-                                        e('p', { className: 'text-3xl font-bold text-green-800' }, stats.concluida)
+                                        e('p', { className: 'text-sm opacity-90 mb-2' }, 'Concluídas'),
+                                        e('p', { className: 'text-4xl font-bold' }, stats.concluida)
                                     ),
-                                    icons.check()
+                                    e('div', { className: 'text-3xl' }, '✅')
                                 )
                             )
                         ),
-                        e('div', { className: 'bg-white rounded-lg shadow-md p-6' },
-                            e('h3', { className: 'text-xl font-bold mb-4' }, 'Resumo de Preventivas'),
-                            e('div', { className: 'grid grid-cols-2 gap-4' },
-                                e('div', { className: 'p-4 bg-indigo-50 rounded-lg' },
-                                    e('p', { className: 'text-indigo-700 text-sm mb-1' }, 'Preventivas Programadas'),
-                                    e('p', { className: 'text-2xl font-bold text-indigo-800' }, preventiveSchedule.length)
+                        e('div', { className: 'modern-card hover-lift animate-fadeInUp delay-400' },
+                            e('h3', { className: `text-2xl font-bold ${textPrimary} mb-6` }, '🔧 Resumo de Preventivas'),
+                            e('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                                e('div', { className: 'gradient-primary text-white p-6 rounded-xl' },
+                                    e('p', { className: 'text-sm opacity-90 mb-2' }, 'Preventivas Programadas'),
+                                    e('p', { className: 'text-3xl font-bold' }, preventiveSchedule.length)
                                 ),
-                                e('div', { className: 'p-4 bg-green-50 rounded-lg' },
-                                    e('p', { className: 'text-green-700 text-sm mb-1' }, 'Preventivas Executadas'),
-                                    e('p', { className: 'text-2xl font-bold text-green-800' }, preventiveRecords.length)
+                                e('div', { className: 'gradient-success text-white p-6 rounded-xl' },
+                                    e('p', { className: 'text-sm opacity-90 mb-2' }, 'Preventivas Executadas'),
+                                    e('p', { className: 'text-3xl font-bold' }, preventiveRecords.length)
                                 )
                             )
                         )
