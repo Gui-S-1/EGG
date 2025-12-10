@@ -858,7 +858,7 @@
                 return e('div', { className: `min-h-screen flex items-center justify-center ${darkMode ? 'dark-mode' : 'bg-gray-50'}` },
                     e('div', { className: 'text-center z-10' },
                         e('div', { className: 'animate-float mb-6' }, icons.wrench()),
-                        e('p', { className: `text-2xl font-bold animate-pulse ${darkMode ? 'text-white' : 'text-gray-800'}` }, 'Carregando sistema...'),
+                        e('p', { className: `text-2xl font-bold animate-pulse ${darkMode ? 'text-white' : 'text-gray-800'}` }, 'Granja Vitta OS'),
                         e('div', { className: 'mt-4 flex gap-2 justify-center' },
                             e('div', { className: 'w-3 h-3 bg-indigo-600 rounded-full animate-bounce', style: { animationDelay: '0s' }}),
                             e('div', { className: 'w-3 h-3 bg-indigo-600 rounded-full animate-bounce', style: { animationDelay: '0.2s' }}),
@@ -1509,8 +1509,8 @@
                             e('div', { className: 'modern-card hover-lift gradient-primary text-white animate-fadeInUp' },
                                 e('div', { className: 'flex items-center justify-between' },
                                     e('div', null,
-                                        e('p', { className: 'text-sm opacity-90 mb-2' }, 'Total de OS'),
-                                        e('p', { className: 'text-4xl font-bold' }, stats.total)
+                                        e('p', { className: 'text-sm opacity-90 mb-2 text-black' }, 'Total de OS'),
+                                        e('p', { className: 'text-4xl font-bold text-black' }, stats.total),
                                     ),
                                     e('div', { className: 'text-3xl' }, '📋')
                                 )
