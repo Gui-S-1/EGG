@@ -1266,7 +1266,7 @@
                                                 className: `modern-input mb-3 ${darkMode ? 'input-dark' : ''}`
                                             },
                                                 e('option', { value: '' }, 'Selecione um executor'),
-                                                allUsers.filter(u => u.role === 'maintenance' || u.role === 'user').map(u =>
+                                                allUsers.filter(u => u.role === 'maintenance' || u.role === 'usemain').map(u =>
                                                     e('option', { key: u.id, value: u.name }, u.name)
                                                 )
                                             ),
