@@ -1266,7 +1266,7 @@
                                                 className: `modern-input mb-3 ${darkMode ? 'input-dark' : ''}`
                                             },
                                                 e('option', { value: '' }, 'Selecione um executor'),
-                                                allUsers.filter(u => u.role === 'maintenance' || u.role === 'user').map(u =>
+                                                allUsers.filter(u => u.role === 'maintenance' || u.role === 'usemain').map(u =>
                                                     e('option', { key: u.id, value: u.name }, u.name)
                                                 )
                                             ),
@@ -1277,7 +1277,7 @@
                                                 }, '✅ Atribuir'),
                                                 e('button', {
                                                     onClick: () => { setEditingExecutor(null); setSelectedExecutor(''); },
-                                                    className: 'px-5 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold transition-all'
+                                                    className: 'px-5 py-3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white rounded-xl font-bold transition-all'
                                                 }, 'Cancelar')
                                             )
                                         ) : e('button', {
@@ -1311,7 +1311,7 @@
                                             }, '📤 Enviar'),
                                             e('button', {
                                                 onClick: () => { setEditingMessage(null); setMessageText(''); },
-                                                className: 'px-5 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold transition-all'
+                                                className: 'px-5 py-3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white rounded-xl font-bold transition-all''
                                             }, 'Cancelar')
                                         )
                                     ) : e('div', null,
